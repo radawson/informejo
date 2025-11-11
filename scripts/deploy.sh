@@ -5,7 +5,7 @@
 
 set -e  # Exit on any error
 
-cd ../informejo
+cd ..
 
 echo "🚀 Starting deployment..."
 
