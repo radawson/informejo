@@ -26,14 +26,26 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
+# Check if docker-compose.yml exists and start containers
+if [ -f docker-compose.yml ]; then
+    echo -e "${YELLOW}🐳 Starting Docker containers...${NC}"
+    docker compose up -d
+fi
+
 echo -e "${YELLOW}📦 Installing dependencies...${NC}"
-npm ci --omit=dev
+npm ci
 
 echo -e "${YELLOW}🔨 Building application...${NC}"
 npm run build
 
+echo -e "${YELLOW}🧹 Cleaning up dev dependencies...${NC}"
+npm prune --omit=dev
+
 echo -e "${YELLOW}🗄️  Running database migrations...${NC}"
 npx prisma migrate deploy
+
+echo -e "${YELLOW}📁 Creating logs directory...${NC}"
+mkdir -p logs
 
 echo -e "${YELLOW}🔄 Stopping existing PM2 process (if any)...${NC}"
 pm2 delete quicket 2>/dev/null || echo "No existing process to stop"

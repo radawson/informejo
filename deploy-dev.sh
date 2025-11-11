@@ -26,8 +26,14 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
+# Stand up docker container
+docker compose up -d
+
 echo -e "${YELLOW}📦 Installing dependencies...${NC}"
 npm install
+
+echo -e "${YELLOW}📁 Creating logs directory...${NC}"
+mkdir -p logs
 
 echo -e "${YELLOW}🔄 Stopping existing PM2 process (if any)...${NC}"
 pm2 delete quicket-dev 2>/dev/null || echo "No existing process to stop"
