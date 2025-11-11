@@ -1,5 +1,6 @@
 {
-  "name": "quicket",
+  "name": "informejo",
+  "description": "Informejo is a platform for creating and managing IT support tickets",
   "version": "1.0.3",
   "private": true,
   "scripts": {

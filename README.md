@@ -1,4 +1,4 @@
-# IT Support Ticket System
+# Informejo
 
 A modern, full-featured IT support ticket management system built with Next.js, TypeScript, Tailwind CSS, and PostgreSQL.
 
