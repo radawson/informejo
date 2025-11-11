@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  GUEST
+  USER
+  ADMIN
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TicketCategory {
+  HARDWARE
+  SOFTWARE
+  NETWORK
+  ACCESS
+  OTHER
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  name           String
+  password       String?  // Null for SSO/GUEST users
+  role           Role     @default(USER)
+  department     String?
+  isKeycloakUser Boolean  @default(false)
+  isActive       Boolean  @default(true)  // For deactivating users
+  magicToken     String?  @unique         // For anonymous ticket viewing
+  magicTokenExp  DateTime?                // Magic token expiration
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  createdTickets   Ticket[]     @relation("CreatedBy")
+  assignedTickets  Ticket[]     @relation("AssignedTo")
+  comments         Comment[]
+  attachments      Attachment[]
+
+  @@index([email])
+  @@index([role])
+  @@index([magicToken])
+}
+
+model Ticket {
+  id          String         @id @default(uuid())
+  title       String
+  description String         @db.Text
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  category    TicketCategory @default(OTHER)
+  
+  createdById String
+  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
+  
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedTo", fields: [assignedToId], references: [id])
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  resolvedAt  DateTime?
+
+  // Relations
+  comments    Comment[]
+  attachments Attachment[]
+
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  content    String   @db.Text
+  isInternal Boolean  @default(false) // Admin-only notes
+  
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  
+  createdAt  DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Attachment {
+  id         String   @id @default(uuid())
+  fileName   String
+  filePath   String
+  fileSize   Int
+  mimeType   String
+  
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  uploadedById String
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+  
+  createdAt  DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([uploadedById])
+}
+

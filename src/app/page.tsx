@@ -1,0 +1,105 @@
+import Link from 'next/link'
+import { Ticket, LogIn, Send } from 'lucide-react'
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-primary-900 mb-4">IT Support Portal</h1>
+          <p className="text-xl text-primary-700">
+            Get help from our IT team quickly and easily
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {/* Submit Ticket Card */}
+          <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow">
+            <div className="flex justify-center mb-6">
+              <div className="bg-primary-100 rounded-full p-6">
+                <Send className="h-12 w-12 text-primary-600" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">
+              Submit a Ticket
+            </h2>
+            <p className="text-gray-600 mb-6 text-center">
+              Have an IT issue? Submit a support ticket and our team will help you resolve it.
+            </p>
+            <Link 
+              href="/submit-ticket"
+              className="btn btn-primary w-full flex items-center justify-center gap-2"
+            >
+              <Ticket size={20} />
+              Create Ticket
+            </Link>
+            <p className="text-sm text-gray-500 mt-4 text-center">
+              No account required
+            </p>
+          </div>
+
+          {/* Sign In Card */}
+          <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow">
+            <div className="flex justify-center mb-6">
+              <div className="bg-primary-100 rounded-full p-6">
+                <LogIn className="h-12 w-12 text-primary-600" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">
+              Sign In
+            </h2>
+            <p className="text-gray-600 mb-6 text-center">
+              Already have an account? Sign in to track your tickets and view your dashboard.
+            </p>
+            <Link 
+              href="/login"
+              className="btn btn-secondary w-full flex items-center justify-center gap-2"
+            >
+              <LogIn size={20} />
+              Sign In
+            </Link>
+            <p className="text-sm text-gray-500 mt-4 text-center">
+              Or <Link href="/register" className="text-primary-600 hover:text-primary-700 font-medium">create an account</Link>
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-16 text-center">
+          <h3 className="text-xl font-semibold text-primary-900 mb-6">
+            How It Works
+          </h3>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div>
+              <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                1
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">Submit Your Issue</h4>
+              <p className="text-gray-600 text-sm">
+                Describe your IT problem and provide relevant details
+              </p>
+            </div>
+            <div>
+              <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                2
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">We Review & Respond</h4>
+              <p className="text-gray-600 text-sm">
+                Our IT team will review and respond to your ticket
+              </p>
+            </div>
+            <div>
+              <div className="bg-primary-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                3
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">Issue Resolved</h4>
+              <p className="text-gray-600 text-sm">
+                Track progress and get your issue resolved quickly
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
