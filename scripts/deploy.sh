@@ -5,6 +5,8 @@
 
 set -e  # Exit on any error
 
+cd ../informejo
+
 echo "🚀 Starting deployment..."
 
 # Colors for output
