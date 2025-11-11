@@ -67,12 +67,12 @@ export async function POST(
     // Send email notifications
     // Notify ticket creator
     if (ticket.createdBy.id !== session.user.id) {
-      await sendNewCommentEmail(ticket, comment, ticket.createdBy, session.user as any)
+      await sendNewCommentEmail(ticket, comment as any, ticket.createdBy, session.user as any)
     }
 
     // Notify assigned admin
     if (ticket.assignedTo && ticket.assignedTo.id !== session.user.id) {
-      await sendNewCommentEmail(ticket, comment, ticket.assignedTo, session.user as any)
+      await sendNewCommentEmail(ticket, comment as any, ticket.assignedTo, session.user as any)
     }
 
     // Emit socket event
@@ -84,7 +84,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
+        { error: 'Invalid input', details: error.issues },
         { status: 400 }
       )
     }

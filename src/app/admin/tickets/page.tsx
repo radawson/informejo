@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import TicketCard from '@/components/TicketCard'
@@ -9,7 +9,7 @@ import { Filter, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useSocket } from '@/components/SocketProvider'
 
-export default function AdminTicketsPage() {
+function TicketsContent() {
   const searchParams = useSearchParams()
   const { socket } = useSocket()
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -202,6 +202,24 @@ export default function AdminTicketsPage() {
         )}
       </main>
     </div>
+  )
+}
+
+export default function AdminTicketsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <TicketsContent />
+    </Suspense>
   )
 }
 
