@@ -16,7 +16,7 @@ export default function Home() {
               className="h-20 w-20"
             />
           </div>
-          <h1 className="text-5xl font-bold text-primary-900 mb-4">Informejo</h1>
+          <h1 className="text-5xl font-bold text-primary-900 mb-4">IT Support Requests</h1>
           <p className="text-xl text-primary-700">
             IT Support Ticket Management System
           </p>
