@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
-import { Send } from 'lucide-react'
+import { Send, X, Paperclip } from 'lucide-react'
 
 export default function AnonymousTicketPage() {
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,15 +20,58 @@ export default function AnonymousTicketPage() {
     priority: 'MEDIUM',
   })
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+    
+    const validFiles = files.filter(file => {
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${file.name} exceeds 10MB size limit`)
+        return false
+      }
+      return true
+    })
+
+    setSelectedFiles(prev => [...prev, ...validFiles])
+    
+    // Reset input to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
+      // Create FormData for file uploads
+      const formDataToSend = new FormData()
+      formDataToSend.append('name', formData.name)
+      formDataToSend.append('email', formData.email)
+      formDataToSend.append('title', formData.title)
+      formDataToSend.append('description', formData.description)
+      formDataToSend.append('category', formData.category)
+      formDataToSend.append('priority', formData.priority)
+
+      // Append all selected files
+      selectedFiles.forEach((file) => {
+        formDataToSend.append('files', file)
+      })
+
       const res = await fetch('/api/tickets/anonymous', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: formDataToSend,
       })
 
       if (!res.ok) {
@@ -182,6 +227,65 @@ export default function AnonymousTicketPage() {
                     placeholder="Please provide detailed information about your issue, including any error messages and steps to reproduce."
                     minLength={10}
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="attachments" className="block text-sm font-medium text-gray-700 mb-1">
+                    Attachments
+                  </label>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={fileInputRef}
+                        id="attachments"
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={handleFileSelect}
+                        accept="*/*"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="btn btn-secondary flex items-center gap-2"
+                      >
+                        <Paperclip size={18} />
+                        Add Files
+                      </button>
+                      <span className="text-sm text-gray-500">
+                        Maximum 10MB per file
+                      </span>
+                    </div>
+                    
+                    {selectedFiles.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {selectedFiles.map((file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                          >
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <Paperclip size={16} className="text-gray-400 shrink-0" />
+                              <span className="text-sm text-gray-700 truncate" title={file.name}>
+                                {file.name}
+                              </span>
+                              <span className="text-xs text-gray-500 shrink-0">
+                                ({formatFileSize(file.size)})
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeFile(index)}
+                              className="ml-2 p-1 text-gray-400 hover:text-red-600 transition-colors"
+                              aria-label="Remove file"
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { sendNewCommentEmail } from '@/lib/email'
+import { emitToTicket, SocketEvents } from '@/lib/socketio-server'
 
 const createCommentSchema = z.object({
   content: z.string().min(1),
@@ -76,9 +77,7 @@ export async function POST(
     }
 
     // Emit socket event
-    if ((global as any).io) {
-      ;(global as any).io.to(`ticket:${id}`).emit('comment:added', comment)
-    }
+    emitToTicket(id, SocketEvents.COMMENT_ADDED, comment)
 
     return NextResponse.json(comment, { status: 201 })
   } catch (error) {

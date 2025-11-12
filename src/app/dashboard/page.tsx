@@ -56,9 +56,14 @@ export default function DashboardPage() {
       fetchData()
     })
 
+    socket.on('ticket:deleted', () => {
+      fetchData()
+    })
+
     return () => {
       socket.off('ticket:created')
       socket.off('ticket:updated')
+      socket.off('ticket:deleted')
     }
   }, [socket])
 

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { TicketStatus, TicketPriority } from '@prisma/client'
 import { sendTicketStatusUpdateEmail, sendTicketAssignedEmail } from '@/lib/email'
+import { emitToTicket, emitToAll, SocketEvents } from '@/lib/socketio-server'
 
 const updateTicketSchema = z.object({
   title: z.string().min(5).max(200).optional(),
@@ -188,10 +189,8 @@ export async function PATCH(
     }
 
     // Emit socket event
-    if ((global as any).io) {
-      (global as any).io.emit('ticket:updated', updatedTicket)
-      ;(global as any).io.to(`ticket:${id}`).emit('ticket:updated', updatedTicket)
-    }
+    emitToAll(SocketEvents.TICKET_UPDATED, updatedTicket)
+    emitToTicket(id, SocketEvents.TICKET_UPDATED, updatedTicket)
 
     return NextResponse.json(updatedTicket)
   } catch (error) {
@@ -221,9 +220,25 @@ export async function DELETE(
     }
 
     const { id } = await params
+    
+    // Get ticket data before deletion for websocket event
+    const ticket = await prisma.ticket.findUnique({
+      where: { id },
+      include: {
+        createdBy: true,
+        assignedTo: true,
+      },
+    })
+
     await prisma.ticket.delete({
       where: { id },
     })
+
+    // Emit websocket event for ticket deletion
+    if (ticket) {
+      emitToAll(SocketEvents.TICKET_DELETED, { id, ticket })
+      emitToTicket(id, SocketEvents.TICKET_DELETED, { id, ticket })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

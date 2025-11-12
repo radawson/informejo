@@ -1,14 +1,24 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Ticket, LogIn, Send } from 'lucide-react'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100">
+    <div className="min-h-screen bg-linear-to-br from-primary-50 to-primary-100">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-primary-900 mb-4">IT Support Portal</h1>
+          <div className="flex justify-center mb-6">
+            <Image 
+              src="/logo.png" 
+              alt="Informejo Logo" 
+              width={80} 
+              height={80}
+              className="h-20 w-20"
+            />
+          </div>
+          <h1 className="text-5xl font-bold text-primary-900 mb-4">IT Support Requests</h1>
           <p className="text-xl text-primary-700">
-            Get help from our IT team quickly and easily
+            IT Support Ticket Management System
           </p>
         </div>
 

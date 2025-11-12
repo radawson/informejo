@@ -77,9 +77,17 @@ export default function TicketDetailPage() {
       })
     })
 
+    socket.on('ticket:deleted', (data: { id: string }) => {
+      if (data.id === params.id) {
+        toast.error('This ticket has been deleted')
+        router.push('/tickets')
+      }
+    })
+
     return () => {
       socket.emit('leave-ticket', params.id)
       socket.off('ticket:updated')
+      socket.off('ticket:deleted')
       socket.off('comment:added')
       socket.off('attachment:added')
     }
@@ -279,7 +287,7 @@ export default function TicketDetailPage() {
             ) : (
               ticket.comments.map((comment) => (
                 <div key={comment.id} className="flex gap-4">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
                       <User size={20} className="text-primary-600" />
                     </div>

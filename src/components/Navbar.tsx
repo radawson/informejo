@@ -2,6 +2,7 @@
 
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { LogOut, LayoutDashboard, Ticket, Shield, Users } from 'lucide-react'
 
@@ -31,8 +32,18 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-8">
-            <Link href={isAdmin && isAdminRoute ? '/admin/dashboard' : '/dashboard'}>
-              <h1 className="text-xl font-bold text-primary-600">IT Support</h1>
+            <Link 
+              href={isAdmin && isAdminRoute ? '/admin/dashboard' : '/dashboard'}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            >
+              <Image 
+                src="/logo.png" 
+                alt="Informejo Logo" 
+                width={32} 
+                height={32}
+                className="h-8 w-8"
+              />
+              <h1 className="text-xl font-bold text-primary-600">Informejo</h1>
             </Link>
             <div className="flex gap-4">
               {navLinks.map((link) => {

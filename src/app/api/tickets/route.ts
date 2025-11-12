@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { TicketStatus, TicketPriority, TicketCategory } from '@prisma/client'
 import { sendTicketCreatedEmail, sendNewTicketNotificationToAdmins } from '@/lib/email'
+import { emitToAll, SocketEvents } from '@/lib/socketio-server'
 
 const createTicketSchema = z.object({
   title: z.string().min(5).max(200),
@@ -135,9 +136,7 @@ export async function POST(req: NextRequest) {
     await sendNewTicketNotificationToAdmins(ticket, session.user as any, admins)
 
     // Emit socket event
-    if ((global as any).io) {
-      (global as any).io.emit('ticket:created', ticket)
-    }
+    emitToAll(SocketEvents.TICKET_CREATED, ticket)
 
     return NextResponse.json(ticket, { status: 201 })
   } catch (error) {

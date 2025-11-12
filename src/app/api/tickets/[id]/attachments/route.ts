@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { existsSync } from 'fs'
+import { emitToTicket, SocketEvents } from '@/lib/socketio-server'
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads'
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '10485760') // 10MB
@@ -87,9 +88,7 @@ export async function POST(
     })
 
     // Emit socket event
-    if ((global as any).io) {
-      ;(global as any).io.to(`ticket:${id}`).emit('attachment:added', attachment)
-    }
+    emitToTicket(id, SocketEvents.ATTACHMENT_ADDED, attachment)
 
     return NextResponse.json(attachment, { status: 201 })
   } catch (error) {

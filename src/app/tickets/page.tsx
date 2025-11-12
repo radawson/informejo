@@ -51,9 +51,14 @@ export default function TicketsPage() {
       )
     })
 
+    socket.on('ticket:deleted', (data: { id: string }) => {
+      setTickets((prev) => prev.filter((t) => t.id !== data.id))
+    })
+
     return () => {
       socket.off('ticket:created')
       socket.off('ticket:updated')
+      socket.off('ticket:deleted')
     }
   }, [socket])
 
