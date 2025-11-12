@@ -33,6 +33,7 @@ enum TicketCategory {
   SOFTWARE
   NETWORK
   ACCESS
+  TRAVEL
   OTHER
 }
 

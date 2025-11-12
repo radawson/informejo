@@ -113,9 +113,17 @@ export default function AdminTicketDetailPage() {
       })
     })
 
+    socket.on('ticket:deleted', (data: { id: string }) => {
+      if (data.id === params.id) {
+        toast.error('This ticket has been deleted')
+        router.push('/admin/tickets')
+      }
+    })
+
     return () => {
       socket.emit('leave-ticket', params.id)
       socket.off('ticket:updated')
+      socket.off('ticket:deleted')
       socket.off('comment:added')
       socket.off('attachment:added')
     }

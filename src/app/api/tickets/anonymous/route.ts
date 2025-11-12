@@ -7,6 +7,7 @@ import { sendTicketCreatedEmail, sendNewTicketNotificationToAdmins } from '@/lib
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { existsSync } from 'fs'
+import { emitToAll, emitToTicket, SocketEvents } from '@/lib/socketio-server'
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads'
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '10485760') // 10MB
@@ -146,15 +147,44 @@ export async function POST(req: NextRequest) {
       // Batch create attachment records for better database performance
       if (validAttachmentData.length > 0) {
         uploadedAttachments = await Promise.all(
-          validAttachmentData.map(data =>
-            prisma.attachment.create({ data })
-          )
+          validAttachmentData.map(async (data) => {
+            const attachment = await prisma.attachment.create({ 
+              data,
+              include: {
+                uploadedBy: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                },
+              },
+            })
+            // Emit websocket event for each attachment
+            emitToTicket(ticket.id, SocketEvents.ATTACHMENT_ADDED, attachment)
+            return attachment
+          })
         )
       }
     }
 
     // Generate magic link for ticket viewing
     const magicLink = await createMagicLink(user.id)
+
+    // Emit websocket event for ticket creation
+    // Include full ticket data with relations for consistency
+    const ticketWithDetails = await prisma.ticket.findUnique({
+      where: { id: ticket.id },
+      include: {
+        createdBy: true,
+        assignedTo: true,
+        comments: true,
+        attachments: true,
+      },
+    })
+    if (ticketWithDetails) {
+      emitToAll(SocketEvents.TICKET_CREATED, ticketWithDetails)
+    }
 
     // Return response immediately, then send emails asynchronously
     // This improves perceived performance for the user

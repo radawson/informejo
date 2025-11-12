@@ -63,9 +63,14 @@ export default function AdminDashboardPage() {
       fetchData()
     })
 
+    socket.on('ticket:deleted', () => {
+      fetchData()
+    })
+
     return () => {
       socket.off('ticket:created')
       socket.off('ticket:updated')
+      socket.off('ticket:deleted')
     }
   }, [socket])
 

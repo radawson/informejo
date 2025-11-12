@@ -73,6 +73,7 @@ export function isSocketIOAvailable(): boolean {
 export const SocketEvents = {
   TICKET_CREATED: 'ticket:created',
   TICKET_UPDATED: 'ticket:updated',
+  TICKET_DELETED: 'ticket:deleted',
   TICKET_ASSIGNED: 'ticket:assigned',
   TICKET_STATUS_CHANGED: 'ticket:status-changed',
   COMMENT_ADDED: 'comment:added',

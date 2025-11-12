@@ -220,9 +220,25 @@ export async function DELETE(
     }
 
     const { id } = await params
+    
+    // Get ticket data before deletion for websocket event
+    const ticket = await prisma.ticket.findUnique({
+      where: { id },
+      include: {
+        createdBy: true,
+        assignedTo: true,
+      },
+    })
+
     await prisma.ticket.delete({
       where: { id },
     })
+
+    // Emit websocket event for ticket deletion
+    if (ticket) {
+      emitToAll(SocketEvents.TICKET_DELETED, { id, ticket })
+      emitToTicket(id, SocketEvents.TICKET_DELETED, { id, ticket })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
