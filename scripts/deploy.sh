@@ -5,8 +5,6 @@
 
 set -e  # Exit on any error
 
-cd ..
-
 echo "🚀 Starting deployment..."
 
 # Colors for output
