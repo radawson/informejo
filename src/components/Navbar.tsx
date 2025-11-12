@@ -83,7 +83,7 @@ export default function Navbar() {
                 <p className="text-xs text-gray-500">{session.user.role}</p>
               </div>
               <button
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={() => signOut({ callbackUrl: '/' })}
                 className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
                 title="Sign out"
               >
