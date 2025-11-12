@@ -22,33 +22,42 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
-    // Socket.io disabled for now - requires custom server setup with Next.js 16
-    // App works fine without it; users just need to refresh to see updates
-    console.log('Socket.io disabled - real-time updates not available')
+    // Initialize Socket.IO connection with custom server
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 
+                     process.env.NEXT_PUBLIC_APP_URL || 
+                     (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3003')
     
-    // Uncomment below to enable Socket.io when custom server is set up
-    /*
-    const socketInstance = io(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000', {
-      path: '/api/socket/io',
+    console.log('[Socket.IO] Connecting to:', socketUrl)
+    
+    const socketInstance = io(socketUrl, {
+      path: '/socket.io',
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
     })
 
     socketInstance.on('connect', () => {
-      console.log('Socket connected')
+      console.log('[Socket.IO] Connected successfully:', socketInstance.id)
       setIsConnected(true)
     })
 
-    socketInstance.on('disconnect', () => {
-      console.log('Socket disconnected')
+    socketInstance.on('disconnect', (reason) => {
+      console.log('[Socket.IO] Disconnected:', reason)
+      setIsConnected(false)
+    })
+
+    socketInstance.on('connect_error', (error) => {
+      console.error('[Socket.IO] Connection error:', error)
       setIsConnected(false)
     })
 
     setSocket(socketInstance)
 
     return () => {
+      console.log('[Socket.IO] Cleaning up connection')
       socketInstance.disconnect()
     }
-    */
   }, [])
 
   return (

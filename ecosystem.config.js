@@ -2,17 +2,16 @@ module.exports = {
   apps: [
     {
       name: 'informejo',
-      script: 'npm',
-      args: 'start',
+      script: './server.js',
       cwd: __dirname,
-      instances: 'max',
-      exec_mode: 'cluster',
+      instances: 1,
+      exec_mode: 'fork',
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000,
+        PORT: 3003,
       },
       error_file: './logs/pm2-error.log',
       out_file: './logs/pm2-out.log',
