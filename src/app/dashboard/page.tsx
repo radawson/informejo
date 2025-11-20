@@ -121,8 +121,8 @@ export default function DashboardPage() {
             color="purple"
           />
           <StatsCard
-            title="Resolved"
-            priorityData={stats?.priorityBreakdown?.resolved}
+            title="Closed"
+            priorityData={stats?.priorityBreakdown?.closed}
             value={0}
             icon={CheckCircle}
             color="green"

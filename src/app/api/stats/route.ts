@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
         where: { ...where, status: TicketStatus.IN_PROGRESS },
         _count: true,
       }),
-      // Priority breakdown for RESOLVED tickets (including CLOSED)
+      // Priority breakdown for closed tickets (RESOLVED and CLOSED combined for accounting)
       prisma.ticket.groupBy({
         by: ['priority'],
         where: { ...where, status: { in: [TicketStatus.RESOLVED, TicketStatus.CLOSED] } },
@@ -65,13 +65,17 @@ export async function GET(req: NextRequest) {
       }),
     ])
 
+    // For accounting purposes, both RESOLVED and CLOSED are considered "closed"
+    const closedTicketsTotal = resolvedTickets + closedTickets
+
     const stats: any = {
       totalTickets,
       openTickets,
       inProgressTickets,
       waitingTickets,
-      resolvedTickets,
-      closedTickets,
+      resolvedTickets, // Keep separate for display
+      closedTickets, // Keep separate for display
+      closedTicketsTotal, // Combined count for accounting
       criticalTickets,
       highPriorityTickets,
       // Priority breakdown for my tickets (available to all users)
@@ -79,17 +83,22 @@ export async function GET(req: NextRequest) {
         myTickets: myTicketsPriorities.reduce((acc: any, item: any) => ({ ...acc, [item.priority]: item._count }), {}),
         open: openPriorities.reduce((acc: any, item: any) => ({ ...acc, [item.priority]: item._count }), {}),
         inProgress: inProgressPriorities.reduce((acc: any, item: any) => ({ ...acc, [item.priority]: item._count }), {}),
-        resolved: resolvedPriorities.reduce((acc: any, item: any) => ({ ...acc, [item.priority]: item._count }), {}),
+        closed: resolvedPriorities.reduce((acc: any, item: any) => ({ ...acc, [item.priority]: item._count }), {}), // Renamed from "resolved" to "closed" to reflect both statuses
       },
     }
 
     // Admin-specific stats
     if (isAdmin) {
-      const [unassignedTickets, myAssignedTickets, resolvedTicketsWithTime, allPriorities, unassignedPriorities, myAssignedPriorities] = await Promise.all([
-        prisma.ticket.count({ where: { assignedToId: null, status: { not: TicketStatus.CLOSED } } }),
+      const [unassignedTickets, myAssignedTickets, closedTicketsWithTime, allPriorities, unassignedPriorities, myAssignedPriorities] = await Promise.all([
+        // Exclude both RESOLVED and CLOSED from unassigned (both are considered "closed" for accounting)
+        prisma.ticket.count({ where: { assignedToId: null, status: { notIn: [TicketStatus.RESOLVED, TicketStatus.CLOSED] } } }),
         prisma.ticket.count({ where: { assignedToId: userId } }),
+        // Include both RESOLVED and CLOSED for average resolution time calculation
         prisma.ticket.findMany({
-          where: { status: TicketStatus.RESOLVED, resolvedAt: { not: null } },
+          where: { 
+            status: { in: [TicketStatus.RESOLVED, TicketStatus.CLOSED] },
+            resolvedAt: { not: null } 
+          },
           select: {
             createdAt: true,
             resolvedAt: true,
@@ -100,10 +109,10 @@ export async function GET(req: NextRequest) {
           by: ['priority'],
           _count: true,
         }),
-        // Priority breakdown for unassigned tickets
+        // Priority breakdown for unassigned tickets (exclude both RESOLVED and CLOSED)
         prisma.ticket.groupBy({
           by: ['priority'],
-          where: { assignedToId: null, status: { not: TicketStatus.CLOSED } },
+          where: { assignedToId: null, status: { notIn: [TicketStatus.RESOLVED, TicketStatus.CLOSED] } },
           _count: true,
         }),
         // Priority breakdown for my assigned tickets
@@ -122,13 +131,13 @@ export async function GET(req: NextRequest) {
       stats.priorityBreakdown.unassigned = unassignedPriorities.reduce((acc: any, item: any) => ({ ...acc, [item.priority]: item._count }), {})
       stats.priorityBreakdown.myAssigned = myAssignedPriorities.reduce((acc: any, item: any) => ({ ...acc, [item.priority]: item._count }), {})
 
-      // Calculate average resolution time in hours
-      if (resolvedTicketsWithTime.length > 0) {
-        const totalTime = resolvedTicketsWithTime.reduce((acc: number, ticket: any) => {
+      // Calculate average resolution time in hours (includes both RESOLVED and CLOSED)
+      if (closedTicketsWithTime.length > 0) {
+        const totalTime = closedTicketsWithTime.reduce((acc: number, ticket: any) => {
           const diff = ticket.resolvedAt!.getTime() - ticket.createdAt.getTime()
           return acc + diff
         }, 0)
-        const avgTimeMs = totalTime / resolvedTicketsWithTime.length
+        const avgTimeMs = totalTime / closedTicketsWithTime.length
         stats.avgResolutionTime = Math.round(avgTimeMs / (1000 * 60 * 60)) // Convert to hours
       } else {
         stats.avgResolutionTime = 0

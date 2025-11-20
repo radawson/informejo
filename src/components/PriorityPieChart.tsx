@@ -12,9 +12,9 @@ interface PriorityPieChartProps {
 
 const COLORS = {
   LOW: '#10b981', // green
-  MEDIUM: '#f59e0b', // amber
-  HIGH: '#ef4444', // red
-  CRITICAL: '#dc2626', // dark red
+  MEDIUM: '#3b82f6', // blue
+  HIGH: '#eab308', // yellow
+  CRITICAL: '#ef4444', // red
 }
 
 export default function PriorityPieChart({ data, size = 120 }: PriorityPieChartProps) {

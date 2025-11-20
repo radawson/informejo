@@ -73,8 +73,9 @@ export interface DashboardStats {
   openTickets: number
   inProgressTickets: number
   waitingTickets: number
-  resolvedTickets: number
-  closedTickets: number
+  resolvedTickets: number // Individual count for display
+  closedTickets: number // Individual count for display
+  closedTicketsTotal: number // Combined count for accounting (RESOLVED + CLOSED)
   criticalTickets: number
   highPriorityTickets: number
   unassignedTickets?: number
@@ -99,7 +100,7 @@ export interface DashboardStats {
       HIGH?: number
       CRITICAL?: number
     }
-    resolved?: {
+    closed?: {
       LOW?: number
       MEDIUM?: number
       HIGH?: number

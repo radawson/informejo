@@ -145,8 +145,8 @@ export default function AdminDashboardPage() {
             <p className="text-2xl font-bold text-yellow-600">{stats?.waitingTickets || 0}</p>
           </div>
           <div className="card">
-            <p className="text-sm text-gray-600 mb-1">Resolved</p>
-            <p className="text-2xl font-bold text-green-600">{stats?.resolvedTickets || 0}</p>
+            <p className="text-sm text-gray-600 mb-1">Closed</p>
+            <p className="text-2xl font-bold text-green-600">{stats?.closedTicketsTotal || 0}</p>
           </div>
         </div>
 
