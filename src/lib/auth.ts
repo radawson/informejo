@@ -3,7 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import KeycloakProvider from 'next-auth/providers/keycloak'
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
-import { Role } from '@prisma/client'
+import { Role } from '@/generated/prisma/client'
 
 export const authOptions: NextAuthOptions = {
   providers: [

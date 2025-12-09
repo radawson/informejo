@@ -1,6 +1,6 @@
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
-import { Role } from '@prisma/client'
+import { Role } from '@/generated/prisma/client'
 
 /**
  * Seeds a default admin user if no admin exists in the database

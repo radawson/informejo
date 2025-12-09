@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { TicketStatus, TicketPriority } from '@prisma/client'
+import { TicketStatus, TicketPriority } from '@/generated/prisma/client'
 import { sendTicketStatusUpdateEmail, sendTicketAssignedEmail } from '@/lib/email'
 import { emitToTicket, emitToAll, SocketEvents } from '@/lib/socketio-server'
 

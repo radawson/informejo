@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { TicketStatus, TicketPriority, TicketCategory, Role } from '@prisma/client'
+import { TicketStatus, TicketPriority, TicketCategory, Role } from '@/generated/prisma/client'
 import { createMagicLink } from '@/lib/magic-link'
 import { sendTicketCreatedEmail, sendNewTicketNotificationToAdmins } from '@/lib/email'
 import { writeFile, mkdir } from 'fs/promises'

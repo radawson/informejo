@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
-import { Role } from '@prisma/client'
+import { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
 
 const registerSchema = z.object({

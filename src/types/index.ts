@@ -1,4 +1,4 @@
-import { Role, TicketStatus, TicketPriority, TicketCategory } from '@prisma/client'
+import { Role, TicketStatus, TicketPriority, TicketCategory } from '@/generated/prisma/client'
 
 export type { Role, TicketStatus, TicketPriority, TicketCategory }
 

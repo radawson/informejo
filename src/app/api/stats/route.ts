@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { TicketStatus } from '@prisma/client'
+import { TicketStatus } from '@/generated/prisma/client'
 
 // GET /api/stats - Get dashboard statistics
 export async function GET(req: NextRequest) {

@@ -4,20 +4,16 @@
 /node_modules
 /.pnp
 .pnp.js
-.yarn/install-state.gz
 
 # testing
 /coverage
-*.lcov
 
 # next.js
 /.next/
 /out/
-next-env.d.ts
 
 # production
 /build
-/dist
 
 # misc
 .DS_Store
@@ -29,11 +25,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env
 .env*.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env
 
 # vercel
 .vercel
@@ -42,41 +35,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# uploads
+/uploads
+
 # prisma
-/prisma/*.db
-/prisma/*.db-journal
+/prisma/migrations/.migrate_lock
 
-# IDE
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.idea
-*.swp
-*.swo
-*~
-
-# OS
-Thumbs.db
-.DS_Store
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-# turbo
-.turbo
-
-# test
-jest-coverage/
-.jest-cache/
-
-# PM2 logs
-/logs/
-*.log
+# Prisma 7 generated client
+/src/generated/

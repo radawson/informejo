@@ -41,23 +41,37 @@ A modern, full-featured IT support ticket management system built with Next.js, 
 
 ## Tech Stack
 
-- **Frontend/Backend**: Next.js 16 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Database**: PostgreSQL
-- **ORM**: Prisma
-- **Authentication**: NextAuth.js with Keycloak OIDC
-- **Real-time**: Socket.io
-- **Email**: Nodemailer
+- **Frontend/Backend**: Next.js 16.0.8 (App Router)
+- **Language**: TypeScript 5.x
+- **Styling**: Tailwind CSS 4.x
+- **Database**: PostgreSQL 14+
+- **ORM**: Prisma ORM 7.x
+- **Authentication**: NextAuth.js 4.x with Keycloak OIDC
+- **Real-time**: Socket.io 4.x
+- **Email**: Nodemailer 7.x
 - **Icons**: Lucide React
 - **Notifications**: React Hot Toast
 
 ## Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 20.19+, 22.12+, or 24+ (required for Prisma 7 and Next.js 16.0.7+)
+- npm 10+
 - PostgreSQL 14+
 - Keycloak server (for admin SSO)
 - SMTP server (optional for email notifications)
+
+### Important Security Update
+
+This project has been updated to address **CVE-2025-55182** (React2Shell vulnerability) which affects React 19 and Next.js 16. The updates include:
+
+- **Next.js**: Updated to v16.0.7+ (fixes CVE-2025-66478)
+- **React**: Updated to v19.0.1+ (fixes CVE-2025-55182)
+- **Prisma ORM**: Upgraded to v7.x (required for compatibility)
+- **Node.js**: Minimum version now 20.19.0 (required for Prisma 7)
+
+For more information:
+- [React2Shell Security Bulletin](https://vercel.com/changelog/cve-2025-55182)
+- [Prisma 7 Upgrade Guide](https://www.prisma.io/docs/orm/more/upgrade-guides/upgrading-versions/upgrading-to-prisma-7)
 
 ## Quick Start
 
@@ -109,15 +123,17 @@ openssl rand -base64 32
 
 ### 3. Setup Database
 
+**Note**: With Prisma 7, the Prisma client is generated to `src/generated/prisma/` instead of `node_modules/@prisma/client/`.
+
 ```bash
+# Generate Prisma client (required after any schema changes)
+npx prisma generate
+
 # Run migrations
 npx prisma migrate dev
 
 # Or for production
 npx prisma migrate deploy
-
-# Generate Prisma client
-npx prisma generate
 ```
 
 ### 4. Run Development Server
@@ -288,6 +304,9 @@ npm start
 ### Database Operations
 
 ```bash
+# Generate Prisma client (run after schema changes)
+npx prisma generate
+
 # Create migration
 npx prisma migrate dev --name description
 
@@ -297,6 +316,8 @@ npx prisma migrate reset
 # Open Prisma Studio (database GUI)
 npx prisma studio
 ```
+
+**Note**: With Prisma 7, you must run `npx prisma generate` before running migrations if you've made schema changes.
 
 ### Linting
 
@@ -376,7 +397,48 @@ enum TicketCategory {
 
 Then run: `npx prisma migrate dev`
 
+## Prisma 7 Migration Notes
+
+This project uses Prisma ORM 7, which has some important differences from Prisma 5/6:
+
+### Key Changes
+1. **Generated Client Location**: The Prisma client is now generated to `src/generated/prisma/` instead of `node_modules/@prisma/client/`
+2. **Import Paths**: All imports now use `@/generated/prisma/client` instead of `@prisma/client`
+3. **Node.js Requirement**: Minimum Node.js version is now 20.19.0 or 22.12+
+4. **Custom Output Path**: The `generator` block specifies `output = "../src/generated/prisma"`
+
+### After Pulling Updates
+If you pull updates that include Prisma schema changes, run:
+```bash
+npx prisma generate
+```
+
 ## Troubleshooting
+
+### Node.js Version Issues
+Prisma 7 requires Node.js 20.19+, 22.12+, or 24+. If you see engine errors:
+```bash
+# Check your current Node.js version
+node --version
+
+# If using nvm, upgrade to a compatible version
+nvm install --lts  # Installs latest LTS (currently v24.x)
+nvm use --lts
+
+# Or install a specific version
+nvm install 22.12
+nvm use 22.12
+```
+
+### Prisma Generate Errors
+If you see errors about missing `@prisma/client` or `@/generated/prisma/client`:
+```bash
+# Make sure you're using a compatible Node.js version first
+node --version
+
+# Regenerate the Prisma client
+npx prisma generate
+```
 
 ### Database Connection Issues
 ```bash
@@ -426,6 +488,14 @@ For issues or questions:
 Proprietary - Internal use only
 
 ## Changelog
+
+### Version 1.0.7 (December 2025)
+- **Security**: Updated to Next.js 16.0.8 to address CVE-2025-55182 (React2Shell vulnerability)
+- **Security**: Updated to React 19.2.1 to address CVE-2025-55182
+- **Breaking**: Upgraded to Prisma ORM 7.x (requires Node.js 20.19+ or 22.12+)
+- **Breaking**: Prisma client now generated to `src/generated/prisma/` instead of `node_modules`
+- **Breaking**: Minimum Node.js version increased to 20.19.0 or 22.12+
+- Updated all dependencies to latest compatible versions
 
 ### Version 1.0.0 (Initial Release)
 - User registration and authentication
