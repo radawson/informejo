@@ -9,9 +9,10 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
+      env_file: '.env',  // Load environment variables from .env file
       env: {
         NODE_ENV: 'production',
-        PORT: 3003,
+        // PORT can be overridden in .env file if needed
       },
       error_file: './logs/pm2-error.log',
       out_file: './logs/pm2-out.log',
