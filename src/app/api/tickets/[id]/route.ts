@@ -171,12 +171,23 @@ export async function PATCH(
 
     // Send notifications
     if (data.status && data.status !== oldStatus) {
+      // Notify ticket creator
       await sendTicketStatusUpdateEmail(
         updatedTicket,
         ticket.createdBy,
         oldStatus,
         data.status
       )
+      
+      // Notify assigned person (if different from creator)
+      if (updatedTicket.assignedTo && updatedTicket.assignedTo.id !== ticket.createdBy.id) {
+        await sendTicketStatusUpdateEmail(
+          updatedTicket,
+          updatedTicket.assignedTo,
+          oldStatus,
+          data.status
+        )
+      }
     }
 
     if (data.assignedToId !== undefined && data.assignedToId !== oldAssignedToId && data.assignedToId) {

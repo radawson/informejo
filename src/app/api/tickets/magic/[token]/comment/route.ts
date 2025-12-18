@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateMagicToken } from '@/lib/magic-link'
 import { z } from 'zod'
+import { sendNewCommentEmail } from '@/lib/email'
 import { emitToTicket, SocketEvents } from '@/lib/socketio-server'
 
 const commentSchema = z.object({
@@ -68,7 +69,11 @@ export async function POST(
       },
     })
 
-    // TODO: Send notification email to assigned admin
+    // Send email notifications
+    // Notify assigned admin (if different from commenter)
+    if (ticket.assignedTo && ticket.assignedTo.id !== userId) {
+      await sendNewCommentEmail(ticket, comment as any, ticket.assignedTo, comment.user as any)
+    }
 
     // Emit websocket event for comment creation
     emitToTicket(ticket.id, SocketEvents.COMMENT_ADDED, comment)
