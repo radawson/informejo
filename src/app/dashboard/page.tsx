@@ -11,18 +11,25 @@ import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { useSocket } from '@/components/SocketProvider'
 
+interface VersionInfo {
+  version: string
+  name: string
+}
+
 export default function DashboardPage() {
   const { data: session } = useSession()
   const { socket } = useSocket()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentTickets, setRecentTickets] = useState<Ticket[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [version, setVersion] = useState<VersionInfo | null>(null)
 
   const fetchData = async () => {
     try {
-      const [statsRes, ticketsRes] = await Promise.all([
+      const [statsRes, ticketsRes, versionRes] = await Promise.all([
         fetch('/api/stats'),
         fetch('/api/tickets'),
+        fetch('/api/version'),
       ])
 
       if (statsRes.ok) {
@@ -33,6 +40,11 @@ export default function DashboardPage() {
       if (ticketsRes.ok) {
         const ticketsData = await ticketsRes.json()
         setRecentTickets(ticketsData.slice(0, 5))
+      }
+
+      if (versionRes.ok) {
+        const versionData = await versionRes.json()
+        setVersion(versionData)
       }
     } catch (error) {
       toast.error('Failed to load dashboard data')
@@ -156,6 +168,15 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Version Info */}
+        {version && (
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <p className="text-xs text-gray-500 text-center">
+              {version.name} v{version.version}
+            </p>
+          </div>
+        )}
       </main>
     </div>
   )
