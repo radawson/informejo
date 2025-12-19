@@ -35,22 +35,33 @@ export async function createMagicLink(userId: string): Promise<string> {
  */
 export async function validateMagicToken(token: string): Promise<string | null> {
   try {
+    if (!token || typeof token !== 'string' || token.trim().length === 0) {
+      console.error('Invalid token provided to validateMagicToken:', token)
+      return null
+    }
+
     const user = await prisma.user.findUnique({
-      where: { magicToken: token },
+      where: { magicToken: token.trim() },
     })
 
     if (!user) {
+      console.log('No user found for magic token')
       return null
     }
 
     // Check if token is expired
     if (user.magicTokenExp && user.magicTokenExp < new Date()) {
+      console.log('Magic token expired for user:', user.id)
       return null
     }
 
     return user.id
   } catch (error) {
     console.error('Error validating magic token:', error)
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
     return null
   }
 }

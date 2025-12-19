@@ -14,6 +14,8 @@ A modern, full-featured IT support ticket management system built with Next.js, 
 - ✅ Personal dashboard with ticket statistics
 - ✅ Filter and search tickets
 - ✅ View ticket history and status changes
+- ✅ Anonymous ticket submission with access code (no account required)
+- ✅ Access tickets via magic link or access code from email
 
 ### For IT Admins
 - ✅ SSO authentication via Keycloak OIDC
@@ -244,6 +246,11 @@ tickets/
 - `GET /api/tickets/[id]` - Get ticket details
 - `PATCH /api/tickets/[id]` - Update ticket
 - `DELETE /api/tickets/[id]` - Delete ticket (admin only)
+- `GET /api/tickets/magic/[token]` - View ticket via magic link token or access code
+  - Accepts full magic tokens (64 hex characters) for authenticated access
+  - Accepts full ticket UUIDs (32 or 36 characters, with or without dashes)
+  - Accepts 12+ character ticket ID prefixes as admin shortcut
+- `POST /api/tickets/magic/[token]/comment` - Add comment via magic link
 
 ### Comments & Attachments
 - `POST /api/tickets/[id]/comments` - Add comment

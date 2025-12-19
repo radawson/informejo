@@ -28,7 +28,7 @@ export async function sendTicketCreatedEmail(ticket: Ticket, user: User, magicLi
       <p>Your support ticket has been successfully created and our team will review it shortly.</p>
       <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
         <h3 style="margin-top: 0;">Ticket Details</h3>
-        <p><strong>Ticket ID:</strong> ${ticket.id.slice(0, 8)}</p>
+        <p><strong>Access Code:</strong> <code style="background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">${ticket.id}</code></p>
         <p><strong>Title:</strong> ${ticket.title}</p>
         <p><strong>Priority:</strong> ${ticket.priority}</p>
         <p><strong>Status:</strong> ${ticket.status}</p>
@@ -37,7 +37,7 @@ export async function sendTicketCreatedEmail(ticket: Ticket, user: User, magicLi
       <p><a href="${viewLink}" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">View Ticket</a></p>
       ${isGuest ? `
       <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
-        <p style="margin: 0;"><strong>Important:</strong> Save this link to check your ticket status anytime. This secure link is unique to you and expires in 3 days.</p>
+        <p style="margin: 0;"><strong>Important:</strong> Save this link or your Access Code to check your ticket status anytime. This secure link is unique to you and expires in 3 days.</p>
       </div>
       ` : ''}
       <p>You will receive email updates as your ticket progresses.</p>

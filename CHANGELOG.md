@@ -5,6 +5,24 @@ All notable changes to the Informejo project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### ✨ Added
+- **Ticket Access Code**: Emails now display the full ticket UUID as "Access Code" instead of a truncated ID
+- **Admin Shortcut**: Support for 12+ character ticket ID prefixes as an admin convenience feature
+
+### 🔄 Changed
+- **Email Format**: Changed "Ticket ID" to "Access Code" in ticket creation emails, displaying the full UUID
+- **Magic Link Route**: Updated `/api/tickets/magic/[token]` to accept:
+  - Full magic tokens (64 hex characters) - primary method for users
+  - Full ticket UUIDs (32 or 36 characters, with or without dashes) - for direct ticket access
+  - 12+ character ticket ID prefixes - admin shortcut feature
+- **Removed**: 8-character ticket ID prefix support (replaced with 12+ character minimum)
+
+### 📚 Documentation
+- Updated CHANGELOG with ticket access code changes
+- Documented admin shortcut feature for ticket ID prefixes
+
 ## [1.0.9] - 2025-12-09
 
 ### 🔒 Security
