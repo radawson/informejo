@@ -70,6 +70,11 @@ export async function POST(
     })
 
     // Send email notifications
+    // Notify ticket creator
+    if (ticket.createdBy.id !== userId) {
+      await sendNewCommentEmail(ticket, comment as any, ticket.createdBy, comment.user as any)
+    }
+
     // Notify assigned admin (if different from commenter)
     if (ticket.assignedTo && ticket.assignedTo.id !== userId) {
       await sendNewCommentEmail(ticket, comment as any, ticket.assignedTo, comment.user as any)
