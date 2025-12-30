@@ -6,6 +6,7 @@
  */
 
 const { createServer } = require('http')
+const { resolve } = require('path')
 const next = require('next')
 const { Server } = require('socket.io')
 
@@ -13,8 +14,11 @@ const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
 const port = parseInt(process.env.PORT || '3003', 10)
 
-// Initialize Next.js app
-const app = next({ dev, hostname, port })
+// Initialize Next.js app with explicit configuration for production
+const app = next({ 
+  dev,
+  dir: resolve(__dirname), // Explicitly set the project directory
+})
 const handle = app.getRequestHandler()
 
 app.prepare().then(() => {
@@ -131,5 +135,8 @@ app.prepare().then(() => {
 
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
   process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+}).catch((err) => {
+  console.error('Failed to start server:', err)
+  process.exit(1)
 })
 
