@@ -6,6 +6,7 @@
  */
 
 const { createServer } = require('http')
+const { parse } = require('url')
 const { resolve } = require('path')
 const next = require('next')
 const { Server } = require('socket.io')
@@ -135,6 +136,9 @@ app.prepare().then(() => {
 
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
   process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+}).catch((err) => {
+  console.error('Failed to start server:', err)
+  process.exit(1)
 }).catch((err) => {
   console.error('Failed to start server:', err)
   process.exit(1)
