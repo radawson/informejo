@@ -222,10 +222,15 @@ export default function TicketDetailPage() {
               Attachments ({ticket.attachments.length})
             </h2>
             <div className="space-y-2">
-              {ticket.attachments.map((attachment) => (
+              {ticket.attachments.map((attachment) => {
+                // Convert /uploads/... to /api/uploads/...
+                const downloadUrl = attachment.filePath.startsWith('/uploads/')
+                  ? attachment.filePath.replace('/uploads/', '/api/uploads/')
+                  : `/api${attachment.filePath}`
+                return (
                 <a
                   key={attachment.id}
-                  href={attachment.filePath.replace(/^\/uploads\//, '/api/uploads/')}
+                  href={downloadUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
@@ -243,7 +248,8 @@ export default function TicketDetailPage() {
                     {(attachment.fileSize / 1024).toFixed(1)} KB
                   </span>
                 </a>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}

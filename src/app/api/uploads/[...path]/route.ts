@@ -109,10 +109,11 @@ export async function GET(
     const contentType = attachment.mimeType || 'application/octet-stream'
 
     // Return file with appropriate headers
+    // Use attachment disposition to force download instead of inline display
     return new NextResponse(fileBuffer, {
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': `inline; filename="${attachment.fileName}"`,
+        'Content-Disposition': `attachment; filename="${attachment.fileName.replace(/"/g, '\\"')}"`,
         'Content-Length': fileBuffer.length.toString(),
         'Cache-Control': 'private, max-age=3600',
       },
