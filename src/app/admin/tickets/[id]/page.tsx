@@ -338,7 +338,7 @@ export default function AdminTicketDetailPage() {
                   {ticket.attachments.map((attachment) => (
                     <a
                       key={attachment.id}
-                      href={attachment.filePath}
+                      href={attachment.filePath.replace(/^\/uploads\//, '/api/uploads/')}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
