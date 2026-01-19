@@ -81,6 +81,8 @@ export interface DashboardStats {
   unassignedTickets?: number
   myAssignedTickets?: number
   avgResolutionTime?: number
+  avgResolutionTimeByCategory?: Partial<Record<TicketCategory, number>>
+  avgResolutionTimeByPriority?: Partial<Record<TicketPriority, number>>
   priorityBreakdown?: {
     myTickets: {
       LOW?: number

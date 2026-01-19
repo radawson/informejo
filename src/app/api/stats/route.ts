@@ -102,6 +102,8 @@ export async function GET(req: NextRequest) {
           select: {
             createdAt: true,
             resolvedAt: true,
+            category: true,
+            priority: true,
           },
         }),
         // Priority breakdown for all tickets
@@ -133,14 +135,44 @@ export async function GET(req: NextRequest) {
 
       // Calculate average resolution time in hours (includes both RESOLVED and CLOSED)
       if (closedTicketsWithTime.length > 0) {
-        const totalTime = closedTicketsWithTime.reduce((acc: number, ticket: any) => {
+        const totalsByCategory = closedTicketsWithTime.reduce((acc: Record<string, { total: number; count: number }>, ticket: any) => {
           const diff = ticket.resolvedAt!.getTime() - ticket.createdAt.getTime()
-          return acc + diff
-        }, 0)
-        const avgTimeMs = totalTime / closedTicketsWithTime.length
+          const current = acc[ticket.category] ?? { total: 0, count: 0 }
+          current.total += diff
+          current.count += 1
+          acc[ticket.category] = current
+          return acc
+        }, {})
+
+        const totalsByPriority = closedTicketsWithTime.reduce((acc: Record<string, { total: number; count: number }>, ticket: any) => {
+          const diff = ticket.resolvedAt!.getTime() - ticket.createdAt.getTime()
+          const current = acc[ticket.priority] ?? { total: 0, count: 0 }
+          current.total += diff
+          current.count += 1
+          acc[ticket.priority] = current
+          return acc
+        }, {})
+
+        const totalTime = Object.values(totalsByCategory).reduce((acc, item) => acc + item.total, 0)
+        const totalCount = Object.values(totalsByCategory).reduce((acc, item) => acc + item.count, 0)
+        const avgTimeMs = totalCount > 0 ? totalTime / totalCount : 0
         stats.avgResolutionTime = Math.round(avgTimeMs / (1000 * 60 * 60)) // Convert to hours
+
+        stats.avgResolutionTimeByCategory = Object.entries(totalsByCategory).reduce((acc: Record<string, number>, [category, value]) => {
+          const avgCategoryMs = value.count > 0 ? value.total / value.count : 0
+          acc[category] = Math.round(avgCategoryMs / (1000 * 60 * 60))
+          return acc
+        }, {})
+
+        stats.avgResolutionTimeByPriority = Object.entries(totalsByPriority).reduce((acc: Record<string, number>, [priority, value]) => {
+          const avgPriorityMs = value.count > 0 ? value.total / value.count : 0
+          acc[priority] = Math.round(avgPriorityMs / (1000 * 60 * 60))
+          return acc
+        }, {})
       } else {
         stats.avgResolutionTime = 0
+        stats.avgResolutionTimeByCategory = {}
+        stats.avgResolutionTimeByPriority = {}
       }
     }
 

@@ -24,6 +24,13 @@ export default function AdminDashboardPage() {
   const [myTickets, setMyTickets] = useState<Ticket[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [version, setVersion] = useState<VersionInfo | null>(null)
+  const priorityOrder = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const
+  const priorityLabels: Record<(typeof priorityOrder)[number], string> = {
+    CRITICAL: 'Critical',
+    HIGH: 'High',
+    MEDIUM: 'Medium',
+    LOW: 'Low',
+  }
 
   const fetchData = async () => {
     try {
@@ -140,6 +147,20 @@ export default function AdminDashboardPage() {
             color="green"
             subtitle="Hours"
           />
+        </div>
+
+        <div className="card mb-8">
+          <p className="text-sm text-gray-600 mb-4">Avg Resolution Time by Criticality</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {priorityOrder.map((priority) => (
+              <div key={priority} className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
+                <span className="text-sm text-gray-700">{priorityLabels[priority]}</span>
+                <span className="text-sm font-semibold text-gray-900">
+                  {stats?.avgResolutionTimeByPriority?.[priority] ?? 0}h
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Secondary Stats */}
