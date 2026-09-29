@@ -5,7 +5,7 @@ This guide will help you deploy the nginx configuration for your Quicket ticketi
 ## Prerequisites
 
 - Nginx installed on your server
-- PM2 running your Next.js app on port 3003
+- The `informejo` systemd service running the app on port 3003
 - HAProxy configured at 10.10.13.1 to forward traffic to this server
 
 ## Installation Steps
@@ -131,22 +131,16 @@ sudo certbot --nginx -d ticket.partridgecrossing.org
 2. Update the SSL certificate paths
 3. Test and restart nginx
 
-## PM2 Configuration
+## Application Service
 
-Ensure your PM2 app is running on port 3003. Check with:
-
-```bash
-pm2 list
-pm2 logs
-```
-
-If you need to configure PM2, check your `ecosystem.config.js`:
+Informejo runs as the `informejo` systemd unit and listens on port 3003. Check it with:
 
 ```bash
-pm2 start ecosystem.config.js
-pm2 save
-pm2 startup
+systemctl status informejo
+journalctl -u informejo -n 100
 ```
+
+Install or restart it with `./scripts/deploy.sh`. See [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ## Firewall Configuration
 
@@ -187,10 +181,10 @@ sudo ufw allow from 10.10.13.1 to any port 443 proto tcp
 
 ### Application not responding
 
-1. Verify PM2 is running:
+1. Verify the service is running:
    ```bash
-   pm2 status
-   pm2 logs --lines 100
+   systemctl status informejo
+   journalctl -u informejo -n 100
    ```
 
 2. Test direct connection to app:
@@ -238,7 +232,7 @@ gzip_types text/plain text/css application/json application/javascript text/xml 
 
 For issues specific to:
 - **Nginx**: Check `/var/log/nginx/quicket_error.log`
-- **PM2**: Run `pm2 logs`
+- **Application service**: Run `journalctl -u informejo`
 - **Application**: Check application logs
 
 ## Configuration Features

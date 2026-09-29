@@ -8,8 +8,13 @@
 const { createServer } = require('http')
 const { parse } = require('url')
 const { resolve } = require('path')
+const crypto = require('crypto')
 const next = require('next')
 const { Server } = require('socket.io')
+
+if (!process.env.SCHEDULE_INTERNAL_SECRET) {
+  process.env.SCHEDULE_INTERNAL_SECRET = crypto.randomBytes(32).toString('hex')
+}
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
@@ -103,6 +108,7 @@ app.prepare().then(() => {
 ║  Status:      Ready to accept connections                  ║
 ╚════════════════════════════════════════════════════════════╝
       `)
+      startScheduleRunner(port)
     })
 
   // Graceful shutdown
@@ -133,4 +139,30 @@ app.prepare().then(() => {
   console.error('Failed to start server:', err)
   process.exit(1)
 })
+
+function startScheduleRunner(listenPort) {
+  const secret = process.env.SCHEDULE_INTERNAL_SECRET
+  let running = false
+
+  const run = async () => {
+    if (running) return
+    running = true
+    try {
+      const response = await fetch(`http://127.0.0.1:${listenPort}/api/internal/schedules/run`, {
+        method: 'POST',
+        headers: { 'x-schedule-secret': secret },
+      })
+      if (!response.ok) {
+        console.error(`[scheduler] Tick failed (${response.status})`)
+      }
+    } catch (error) {
+      console.error('[scheduler] Tick failed', error)
+    } finally {
+      running = false
+    }
+  }
+
+  setTimeout(run, 5000)
+  setInterval(run, 60 * 1000)
+}
 

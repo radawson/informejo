@@ -278,6 +278,14 @@ export default function AdminTicketDetailPage() {
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">{ticket.title}</h1>
                   <p className="text-sm text-gray-500">Ticket #{ticket.id.slice(0, 8)}</p>
+                  {ticket.scheduleRun?.schedule && (
+                    <Link
+                      href={`/admin/calendar?schedule=${ticket.scheduleRun.scheduleId}`}
+                      className="inline-block mt-2 text-sm text-primary-700 hover:underline"
+                    >
+                      Created from schedule: {ticket.scheduleRun.schedule.title}
+                    </Link>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2 items-end">
                   <StatusBadge status={ticket.status} />

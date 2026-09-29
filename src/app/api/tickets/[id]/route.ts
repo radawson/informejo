@@ -76,6 +76,19 @@ export async function GET(
             createdAt: 'desc',
           },
         },
+        scheduleRun: {
+          select: {
+            id: true,
+            scheduleId: true,
+            scheduledFor: true,
+            schedule: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+          },
+        },
       },
     })
 

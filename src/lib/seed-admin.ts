@@ -1,6 +1,7 @@
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 import { Role } from '@/generated/prisma/client'
+import { ensureSystemUser } from './system-user'
 
 /**
  * Seeds a default admin user if no admin exists in the database
@@ -8,9 +9,11 @@ import { Role } from '@/generated/prisma/client'
  */
 export async function seedDefaultAdmin() {
   try {
-    // Check if any admin exists
+    await ensureSystemUser()
+
+    // A system account is not an admin and must not block this seed.
     const adminExists = await prisma.user.findFirst({
-      where: { role: Role.ADMIN },
+      where: { role: Role.ADMIN, isSystem: false },
     })
 
     if (adminExists) {

@@ -1,12 +1,13 @@
 # Informejo Deployment Guide
 
-This guide explains how to deploy Informejo to production using PM2.
+This guide explains how to deploy Informejo to production with systemd.
 
 ## Prerequisites
 
-- Node.js >= 18.18.0
+- Node.js >= 20.19
 - PostgreSQL database
-- PM2 (will be installed automatically if not present)
+- systemd
+- sudo access to install a system service
 - Docker (optional, for running PostgreSQL locally)
 
 ## Environment Setup
@@ -44,71 +45,53 @@ APP_URL="https://your-domain.com"
 Simply run the deployment script:
 
 ```bash
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 This script will:
 
 1. Install dependencies
 2. Build the application
-3. Clean up dev dependencies
-4. Run database migrations
-5. Start the application with PM2
+3. Run database migrations
+4. Remove a leftover PM2 process named `informejo`, if PM2 is still installed
+5. Install and start the `informejo` systemd service
+
+`informejo` and `informejo-dev` listen on the same port. The production script stops the dev service first.
 
 ### Option 2: Manual Deployment
 
 ```bash
-# 1. Install dependencies
 npm ci
-
-# 2. Build the application
 npm run build
-
-# 3. Run database migrations
 npx prisma migrate deploy
-
-# 4. Start with PM2
-pm2 start ecosystem.config.js
-pm2 save
+chmod +x scripts/install-systemd-unit.sh deploy/start.sh
+./scripts/install-systemd-unit.sh informejo production
+sudo systemctl enable --now informejo
+sudo systemctl restart informejo
 ```
 
 ## Development Deployment
 
-To deploy in development mode with PM2:
+To run a long-lived development process under systemd:
 
 ```bash
-./deploy-dev.sh
+./scripts/deploy-dev.sh
 ```
 
-This will:
-1. Start Docker containers
-2. Install all dependencies
-3. Start the application in development mode with PM2
+This starts Docker when `docker-compose.yml` is present, installs dependencies, and enables `informejo-dev.service` with `NODE_ENV=development`.
 
-## PM2 Management Commands
+For day-to-day work, `npm run dev` does not install a service.
+
+## Service Management
 
 ```bash
-# Check status
-pm2 status
-
-# View logs
-pm2 logs quicket
-
-# View real-time logs
-pm2 logs quicket --lines 100
-
-# Restart application
-pm2 restart quicket
-
-# Stop application
-pm2 stop quicket
-
-# Monitor resources
-pm2 monit
-
-# Delete process
-pm2 delete quicket
+systemctl status informejo
+journalctl -u informejo -f
+sudo systemctl restart informejo
+sudo systemctl stop informejo
 ```
+
+The app listens on port 3003 unless `PORT` is set in `.env`. `deploy/start.sh` loads `.env` before it starts `server.js`.
 
 ## Nginx Configuration (Recommended)
 
@@ -120,7 +103,7 @@ server {
     server_name your-domain.com;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3003;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -133,7 +116,7 @@ server {
 
     # WebSocket support for Socket.IO
     location /socket.io/ {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3003;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -170,11 +153,7 @@ npx prisma migrate dev --name migration_name
 ### Check Logs
 
 ```bash
-# PM2 logs
-pm2 logs quicket
-
-# System logs
-journalctl -u quicket -f
+journalctl -u informejo -f
 ```
 
 ### Database Connection Issues
@@ -188,32 +167,21 @@ journalctl -u quicket -f
 
 1. Clear Next.js cache: `rm -rf .next`
 2. Reinstall dependencies: `rm -rf node_modules && npm install`
-3. Check Node.js version: `node --version` (should be >= 18.18.0)
+3. Check Node.js version: `node --version` (should be ^20.19, ^22.12, or >= 24)
 
 ### Port Already in Use
 
 ```bash
-# Find process using port 3000
-lsof -i :3000
+# Find process using port 3003
+lsof -i :3003
 
 # Kill process
 kill -9 <PID>
 ```
 
-## Performance Optimization
+## Performance
 
-### PM2 Cluster Mode
-
-For better performance with multiple CPU cores, edit `ecosystem.config.js`:
-
-```javascript
-instances: 'max',  // or specific number
-exec_mode: 'cluster'
-```
-
-### Memory Management
-
-PM2 will automatically restart if memory exceeds 1GB (configurable in `ecosystem.config.js`).
+The systemd unit is a single process because Socket.IO and the schedule runner share that process. `MemoryMax=1G` stops the service if it exceeds 1GB, and `Restart=on-failure` starts it again.
 
 ## Backup
 
@@ -229,25 +197,13 @@ pg_dump -U username -d quicket > backup_$(date +%Y%m%d).sql
 psql -U username -d quicket < backup_20250111.sql
 ```
 
-## Monitoring
-
-### PM2 Plus (Optional)
-
-For advanced monitoring:
-
-```bash
-pm2 link <secret> <public>
-```
-
-Visit https://app.pm2.io for dashboard.
-
 ## Updates
 
 To update the application:
 
 ```bash
 git pull
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 ## Rollback
@@ -257,12 +213,11 @@ git pull
 git reset --hard HEAD~1
 
 # Redeploy
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 ## Support
 
 For issues, check:
-- Application logs: `pm2 logs quicket`
-- System logs: `journalctl -u quicket`
+- Application logs: `journalctl -u informejo`
 - Database logs: Check PostgreSQL logs

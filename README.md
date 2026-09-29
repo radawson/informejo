@@ -170,7 +170,7 @@ Quick summary:
 1. Install Node.js, PostgreSQL, nginx
 2. Configure environment variables
 3. Build application: `npm run build`
-4. Run with PM2: `pm2 start ecosystem.config.js`
+4. Install the systemd service: `./scripts/deploy.sh`
 5. Configure nginx as reverse proxy
 6. Setup SSL with Let's Encrypt
 
@@ -508,7 +508,7 @@ This is a private project for your organization. For modifications:
 ## Support
 
 For issues or questions:
-1. Check logs: `pm2 logs it-tickets`
+1. Check logs: `journalctl -u informejo`
 2. Review nginx logs: `/var/log/nginx/tickets-error.log`
 3. Check database logs
 4. Contact your system administrator
