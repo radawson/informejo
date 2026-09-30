@@ -374,9 +374,16 @@ function CalendarDialog({
     }
   }, [])
 
+  const focusKey =
+    panel.type === 'note'
+      ? `note:${panel.note.id ?? 'new'}:${panel.note.day}`
+      : panel.type === 'schedule'
+        ? `schedule:${panel.schedule?.id ?? 'new'}:${panel.date}:${panel.time}`
+        : `choose:${panel.date}:${panel.time}`
+
   useEffect(() => {
     dialogRef.current?.querySelector<HTMLElement>('#calendar-dialog-title')?.focus()
-  }, [panel])
+  }, [focusKey])
 
   return (
     <dialog
