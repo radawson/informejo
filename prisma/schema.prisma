@@ -46,6 +46,7 @@ model User {
   department     String?
   isKeycloakUser Boolean  @default(false)
   isActive       Boolean  @default(true)  // For deactivating users
+  isSystem       Boolean  @default(false) // Hidden account that creates scheduled tickets
   magicToken     String?  @unique         // For anonymous ticket viewing
   magicTokenExp  DateTime?                // Magic token expiration
   createdAt      DateTime @default(now())
@@ -56,6 +57,9 @@ model User {
   assignedTickets  Ticket[]     @relation("AssignedTo")
   comments         Comment[]
   attachments      Attachment[]
+  createdSchedules Schedule[]   @relation("ScheduleCreatedBy")
+  assignedSchedules Schedule[]  @relation("ScheduleAssignedTo")
+  calendarNotes    CalendarNote[]
 
   @@index([email])
   @@index([role])
@@ -83,6 +87,7 @@ model Ticket {
   // Relations
   comments    Comment[]
   attachments Attachment[]
+  scheduleRun ScheduleRun?
 
   @@index([createdById])
   @@index([assignedToId])
@@ -126,5 +131,64 @@ model Attachment {
 
   @@index([ticketId])
   @@index([uploadedById])
+}
+
+model Schedule {
+  id          String         @id @default(uuid())
+  title       String
+  description String         @db.Text
+  category    TicketCategory @default(OTHER)
+  priority    TicketPriority @default(MEDIUM)
+
+  assignedToId String?
+  assignedTo   User?   @relation("ScheduleAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  // First fire instant. Wall-clock time is interpreted in timeZone.
+  startsAt DateTime
+  timeZone String   @default("America/New_York")
+  repeats  Boolean  @default(false)
+  rrule    String?
+  until    DateTime?
+
+  isActive   Boolean   @default(true)
+  nextFireAt DateTime?
+
+  createdById String
+  createdBy   User   @relation("ScheduleCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  runs ScheduleRun[]
+
+  @@index([isActive, nextFireAt])
+  @@index([createdById])
+  @@index([assignedToId])
+}
+
+model ScheduleRun {
+  id           String   @id @default(uuid())
+  scheduleId   String
+  schedule     Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  ticketId     String   @unique
+  ticket       Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  scheduledFor DateTime
+  firedAt      DateTime @default(now())
+
+  @@unique([scheduleId, scheduledFor])
+  @@index([scheduledFor])
+}
+
+model CalendarNote {
+  id          String   @id @default(uuid())
+  day         String
+  body        String   @db.Text
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([day])
+  @@index([createdById])
 }
 

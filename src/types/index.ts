@@ -62,6 +62,12 @@ export interface TicketWithDetails extends Ticket {
   assignedTo: User | null
   comments: (Comment & { user: User })[]
   attachments: (Attachment & { uploadedBy: User })[]
+  scheduleRun?: {
+    id: string
+    scheduleId: string
+    scheduledFor: string | Date
+    schedule: { id: string; title: string } | null
+  } | null
   _count: {
     comments: number
     attachments: number

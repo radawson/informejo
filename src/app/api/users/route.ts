@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const role = searchParams.get('role')
 
-    const where: any = {}
+    const where: any = { isSystem: false }
     if (role) {
       where.role = role
     }
@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
         role: true,
         department: true,
         isKeycloakUser: true,
+        isActive: true,
         createdAt: true,
       },
       orderBy: {

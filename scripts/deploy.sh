@@ -1,29 +1,24 @@
 #!/bin/bash
 
 # Informejo Deployment Script
-# This script builds and deploys the application to PM2
+# Builds the application and runs it as a systemd service.
 
-set -e  # Exit on any error
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
 
 echo "🚀 Starting deployment..."
 
-# Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Check if PM2 is installed
-if ! command -v pm2 &> /dev/null; then
-    echo -e "${RED}❌ PM2 is not installed. Installing PM2...${NC}"
-    npm install -g pm2
-fi
-
-# Check if .env file exists
-if [ ! -f .env ]; then
-    echo -e "${RED}❌ Error: .env file not found!${NC}"
-    echo "Please create a .env file with the required environment variables."
-    exit 1
+if [[ ! -f .env ]]; then
+  echo -e "${RED}❌ Error: .env file not found!${NC}"
+  echo "Please create a .env file with the required environment variables."
+  exit 1
 fi
 
 echo -e "${YELLOW}📦 Installing dependencies...${NC}"
@@ -32,33 +27,29 @@ npm ci
 echo -e "${YELLOW}🔨 Building application...${NC}"
 npm run build
 
-echo -e "${YELLOW}🧹 Cleaning up dev dependencies...${NC}"
-npm prune --omit=dev
-
 echo -e "${YELLOW}🗄️  Running database migrations...${NC}"
 npx prisma migrate deploy
 
-echo -e "${YELLOW}📁 Creating logs directory...${NC}"
-mkdir -p logs
+echo -e "${YELLOW}🧹 Cleaning up dev dependencies...${NC}"
+npm prune --omit=dev
 
-echo -e "${YELLOW}🔄 Stopping existing PM2 process (if any)...${NC}"
-pm2 delete informejo 2>/dev/null || echo "No existing process to stop"
+if command -v pm2 >/dev/null 2>&1; then
+  echo -e "${YELLOW}🛑 Removing leftover PM2 process (if any)...${NC}"
+  pm2 delete informejo >/dev/null 2>&1 || true
+  pm2 save >/dev/null 2>&1 || true
+fi
 
-echo -e "${YELLOW}🚀 Starting application with PM2...${NC}"
-pm2 start ecosystem.config.js
-
-echo -e "${YELLOW}💾 Saving PM2 process list...${NC}"
-pm2 save
-
-echo -e "${YELLOW}⚙️  Setting up PM2 startup script...${NC}"
-pm2 startup systemd -u $USER --hp $HOME || echo "PM2 startup already configured"
+echo -e "${YELLOW}⚙️  Installing systemd service...${NC}"
+chmod +x "$ROOT/scripts/install-systemd-unit.sh" "$ROOT/deploy/start.sh"
+sudo systemctl disable --now informejo-dev >/dev/null 2>&1 || true
+"$ROOT/scripts/install-systemd-unit.sh" informejo production
+sudo systemctl enable --now informejo
+sudo systemctl restart informejo
 
 echo -e "${GREEN}✅ Deployment complete!${NC}"
 echo ""
-echo "Useful PM2 commands:"
-echo "  pm2 status            - Check application status"
-echo "  pm2 logs informejo    - View application logs"
-echo "  pm2 restart informejo - Restart the application"
-echo "  pm2 stop informejo    - Stop the application"
-echo "  pm2 monit             - Monitor application"
-
+echo "Useful commands:"
+echo "  systemctl status informejo          - Check application status"
+echo "  journalctl -u informejo -f          - Follow application logs"
+echo "  sudo systemctl restart informejo    - Restart the application"
+echo "  sudo systemctl stop informejo       - Stop the application"

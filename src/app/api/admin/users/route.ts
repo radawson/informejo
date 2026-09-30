@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search') || ''
     const role = searchParams.get('role') || ''
 
-    const where: any = {}
+    const where: any = { isSystem: false }
 
     if (search) {
       where.OR = [

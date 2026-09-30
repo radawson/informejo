@@ -4,7 +4,7 @@ import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { LogOut, LayoutDashboard, Ticket, Shield, Users } from 'lucide-react'
+import { LogOut, LayoutDashboard, Ticket, Shield, Users, Calendar } from 'lucide-react'
 
 export default function Navbar() {
   const { data: session } = useSession()
@@ -19,6 +19,7 @@ export default function Navbar() {
     ? [
         { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/admin/tickets', label: 'All Tickets', icon: Ticket },
+        { href: '/admin/calendar', label: 'Calendar', icon: Calendar },
         { href: '/admin/users', label: 'Users', icon: Users },
       ]
     : [
@@ -45,7 +46,7 @@ export default function Navbar() {
               />
               <h1 className="text-xl font-bold text-primary-600">Informejo</h1>
             </Link>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               {navLinks.map((link) => {
                 const Icon = link.icon
                 const isActive = pathname === link.href
