@@ -290,9 +290,8 @@ For production:
 
 ### File Upload Configuration
 
-Configure in `.env`:
+Attachments are stored in an `uploads/` directory next to the application. Set the maximum size in `.env`:
 ```env
-UPLOAD_DIR="./uploads"
 MAX_FILE_SIZE="10485760"  # 10MB in bytes
 ```
 

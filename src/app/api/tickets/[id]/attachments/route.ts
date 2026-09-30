@@ -7,7 +7,6 @@ import path from 'path'
 import { existsSync } from 'fs'
 import { emitToTicket, SocketEvents } from '@/lib/socketio-server'
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads'
 const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '10485760') // 10MB
 
 // POST /api/tickets/[id]/attachments - Upload attachment
@@ -50,7 +49,7 @@ export async function POST(
     }
 
     // Create upload directory if it doesn't exist
-    const ticketDir = path.join(UPLOAD_DIR, id)
+    const ticketDir = path.join(process.cwd(), 'uploads', id)
     if (!existsSync(ticketDir)) {
       await mkdir(ticketDir, { recursive: true })
     }

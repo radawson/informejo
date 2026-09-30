@@ -44,7 +44,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.3.3",
-    "@testing-library/jest-dom": "^6.10.0",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",
     "@types/jest": "^30.0.0",
@@ -65,5 +65,11 @@
   },
   "engines": {
     "node": "^20.19 || ^22.12 || >=24.0"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.6.0": true,
+    "@prisma/engines@7.10.0": true,
+    "prisma@7.10.0": true,
+    "unrs-resolver@1.12.2": true
   }
 }

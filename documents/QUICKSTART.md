@@ -67,7 +67,6 @@ SMTP_PASSWORD="your-mailtrap-password"
 SMTP_FROM="IT Support <support@example.com>"
 
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
-UPLOAD_DIR="./uploads"
 MAX_FILE_SIZE="10485760"
 ```
 
