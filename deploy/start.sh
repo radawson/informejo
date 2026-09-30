@@ -3,12 +3,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# Node parses the env file itself. Sourcing it in the shell would expand
+# `$` and command substitutions inside credentials.
+export NODE_ENV="${NODE_ENV:-production}"
+args=()
 if [[ -f .env ]]; then
-  set -a
-  # shellcheck disable=SC1091
-  source .env
-  set +a
+  args+=(--env-file=.env)
 fi
 
-export NODE_ENV="${NODE_ENV:-production}"
-exec "${INFORMEJO_NODE_BIN:-node}" server.js
+exec "${INFORMEJO_NODE_BIN:-node}" "${args[@]}" server.js

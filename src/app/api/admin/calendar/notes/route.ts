@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/admin-session'
+import { isCalendarDay } from '@/lib/recurrence'
 
 const noteSchema = z.object({
-  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  day: z.string().refine(isCalendarDay, 'Invalid calendar date'),
   body: z.string().trim().min(1).max(5000),
 })
 
@@ -16,7 +17,7 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url)
   const day = searchParams.get('day')
-  const where = day && /^\d{4}-\d{2}-\d{2}$/.test(day) ? { day } : {}
+  const where = day && isCalendarDay(day) ? { day } : {}
 
   const notes = await prisma.calendarNote.findMany({
     where,

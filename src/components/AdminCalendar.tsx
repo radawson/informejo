@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -45,10 +45,15 @@ export default function AdminCalendar() {
     }
   }, [])
 
+  const loadGeneration = useRef(0)
+
   const loadEvents = useCallback(async (start: string, end: string) => {
+    const generation = ++loadGeneration.current
     const res = await fetch(`/api/admin/calendar?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`)
+    if (generation !== loadGeneration.current) return
     if (res.ok) {
       const data = await res.json()
+      if (generation !== loadGeneration.current) return
       setEvents(data.events)
     }
   }, [])
@@ -259,13 +264,12 @@ export default function AdminCalendar() {
       </aside>
 
       {panel && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8">
-          <div className="card w-full max-w-2xl my-8">
+        <CalendarDialog panel={panel} onClose={() => setPanel(null)}>
             {panel.type === 'choose' && (
               <div className="space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">{panel.date}</h2>
+                    <h2 id="calendar-dialog-title" tabIndex={-1} className="text-xl font-semibold text-gray-900 outline-none">{panel.date}</h2>
                     <p className="text-sm text-gray-500">Add something on this day.</p>
                   </div>
                   <button type="button" onClick={() => setPanel(null)} className="text-sm text-gray-500 hover:text-gray-800">Close</button>
@@ -298,7 +302,7 @@ export default function AdminCalendar() {
               <form onSubmit={saveNote} className="space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">
+                    <h2 id="calendar-dialog-title" tabIndex={-1} className="text-xl font-semibold text-gray-900 outline-none">
                       {panel.note.id ? 'Edit note' : 'New note'}
                     </h2>
                     <p className="text-sm text-gray-500">{panel.note.day}. Visible to every admin.</p>
@@ -344,10 +348,48 @@ export default function AdminCalendar() {
                 }}
               />
             )}
-          </div>
-        </div>
+        </CalendarDialog>
       )}
     </div>
+  )
+}
+
+function CalendarDialog({
+  panel,
+  onClose,
+  children,
+}: {
+  panel: Panel
+  onClose: () => void
+  children: ReactNode
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    if (!dialog.open) dialog.showModal()
+    return () => {
+      if (dialog.open) dialog.close()
+    }
+  }, [])
+
+  useEffect(() => {
+    dialogRef.current?.querySelector<HTMLElement>('#calendar-dialog-title')?.focus()
+  }, [panel])
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className="calendar-dialog"
+      aria-labelledby="calendar-dialog-title"
+      onCancel={(event) => {
+        event.preventDefault()
+        onClose()
+      }}
+    >
+      {children}
+    </dialog>
   )
 }
 

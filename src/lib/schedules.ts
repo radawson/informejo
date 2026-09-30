@@ -14,7 +14,9 @@ import {
   parseWallClock,
   resolveNextFireAt,
   untilInstant,
+  isCalendarDay,
 } from '@/lib/recurrence'
+import { withScheduleLock } from '@/lib/schedule-lock'
 
 const weekdaySchema = z.enum(WEEKDAYS)
 const nthSchema = z.union([
@@ -25,13 +27,15 @@ const nthSchema = z.union([
   z.literal(-1),
 ])
 
+const calendarDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(isCalendarDay, 'Invalid calendar date')
+
 export const scheduleBodySchema = z.object({
   title: z.string().trim().min(5).max(200),
   description: z.string().trim().min(10),
   category: z.nativeEnum(TicketCategory),
   priority: z.nativeEnum(TicketPriority).optional(),
   assignedToId: z.string().uuid().nullable().optional(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: calendarDay,
   time: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
   repeats: z.boolean(),
   freq: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']).optional(),
@@ -43,7 +47,7 @@ export const scheduleBodySchema = z.object({
   nthWeekday: weekdaySchema.optional(),
   yearMonth: z.number().int().min(1).max(12).optional(),
   yearlyMode: z.enum(['monthday', 'nth', 'lastDay']).optional(),
-  untilDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  untilDate: calendarDay.nullable().optional(),
   isActive: z.boolean().optional(),
 })
 
@@ -195,80 +199,83 @@ export async function createSchedule(body: ScheduleBody, createdById: string) {
 }
 
 export async function updateSchedule(id: string, body: ScheduleBody) {
-  const existing = await prisma.schedule.findUnique({
-    where: { id },
-    include: { runs: { select: { scheduledFor: true } } },
-  })
-  if (!existing) return null
-
   const assignedToId = await assertActiveAdmin(body.assignedToId)
   const data = scheduleDataFromBody(body)
-  const isActive = body.isActive ?? existing.isActive
-  const firedAt = existing.runs.map((run) => run.scheduledFor)
-  const nextFireAt = isActive
-    ? resolveNextFireAt({
-        startsAt: data.startsAt,
-        timeZone: data.timeZone,
-        repeats: data.repeats,
-        rrule: data.rrule,
-        until: data.until,
-        now: new Date(),
-        firedAt,
-        mode: 'catch-up',
-      })
-    : existing.nextFireAt
 
-  const schedule = await prisma.schedule.update({
-    where: { id },
-    data: {
-      ...data,
-      assignedToId,
-      isActive: isActive && nextFireAt != null,
-      nextFireAt: isActive ? nextFireAt : existing.nextFireAt,
-    },
-    include: scheduleInclude,
+  const schedule = await withScheduleLock(async (tx) => {
+    const existing = await tx.schedule.findUnique({
+      where: { id },
+      include: { runs: { select: { scheduledFor: true } } },
+    })
+    if (!existing) return null
+
+    const isActive = body.isActive ?? existing.isActive
+    const nextFireAt = isActive
+      ? resolveNextFireAt({
+          startsAt: data.startsAt,
+          timeZone: data.timeZone,
+          repeats: data.repeats,
+          rrule: data.rrule,
+          until: data.until,
+          now: new Date(),
+          firedAt: existing.runs.map((run) => run.scheduledFor),
+          mode: 'catch-up',
+        })
+      : existing.nextFireAt
+
+    return tx.schedule.update({
+      where: { id },
+      data: {
+        ...data,
+        assignedToId,
+        isActive: isActive && nextFireAt != null,
+        nextFireAt: isActive ? nextFireAt : existing.nextFireAt,
+      },
+      include: scheduleInclude,
+    })
   })
 
-  return serializeSchedule(schedule)
+  return schedule ? serializeSchedule(schedule) : null
 }
 
 export async function setScheduleActive(id: string, isActive: boolean) {
-  const existing = await prisma.schedule.findUnique({
-    where: { id },
-    include: { runs: { select: { scheduledFor: true } } },
-  })
-  if (!existing) return null
-
-  if (!isActive) {
-    const schedule = await prisma.schedule.update({
+  const schedule = await withScheduleLock(async (tx) => {
+    const existing = await tx.schedule.findUnique({
       where: { id },
-      data: { isActive: false },
+      include: { runs: { select: { scheduledFor: true } } },
+    })
+    if (!existing) return null
+
+    if (!isActive) {
+      return tx.schedule.update({
+        where: { id },
+        data: { isActive: false },
+        include: scheduleInclude,
+      })
+    }
+
+    const nextFireAt = resolveNextFireAt({
+      startsAt: existing.startsAt,
+      timeZone: existing.timeZone,
+      repeats: existing.repeats,
+      rrule: existing.rrule,
+      until: existing.until,
+      now: new Date(),
+      firedAt: existing.runs.map((run) => run.scheduledFor),
+      mode: 'future-only',
+    })
+
+    return tx.schedule.update({
+      where: { id },
+      data: {
+        isActive: nextFireAt != null,
+        nextFireAt,
+      },
       include: scheduleInclude,
     })
-    return serializeSchedule(schedule)
-  }
-
-  const nextFireAt = resolveNextFireAt({
-    startsAt: existing.startsAt,
-    timeZone: existing.timeZone,
-    repeats: existing.repeats,
-    rrule: existing.rrule,
-    until: existing.until,
-    now: new Date(),
-    firedAt: existing.runs.map((run) => run.scheduledFor),
-    mode: 'future-only',
   })
 
-  const schedule = await prisma.schedule.update({
-    where: { id },
-    data: {
-      isActive: nextFireAt != null,
-      nextFireAt,
-    },
-    include: scheduleInclude,
-  })
-
-  return serializeSchedule(schedule)
+  return schedule ? serializeSchedule(schedule) : null
 }
 
 export async function listSchedules() {

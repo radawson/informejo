@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { TicketCategory, TicketPriority } from '@/types'
-import { WEEKDAYS } from '@/lib/recurrence'
+import { WEEKDAYS, weekdayTokenForDate } from '@/lib/recurrence'
 import toast from 'react-hot-toast'
 
 export interface ScheduleRecord {
@@ -72,6 +72,7 @@ export default function ScheduleEditor({
   onSaved,
 }: ScheduleEditorProps) {
   const recurrence = schedule?.recurrence
+  const selectedWeekday = weekdayTokenForDate(schedule?.date ?? date)
   const [title, setTitle] = useState(schedule?.title ?? '')
   const [description, setDescription] = useState(schedule?.description ?? '')
   const [category, setCategory] = useState<TicketCategory>(schedule?.category ?? 'OTHER')
@@ -82,11 +83,13 @@ export default function ScheduleEditor({
   const [repeats, setRepeats] = useState(recurrence?.repeats ?? false)
   const [freq, setFreq] = useState(recurrence?.freq ?? 'MONTHLY')
   const [interval, setIntervalValue] = useState(recurrence?.interval ?? 1)
-  const [weekdays, setWeekdays] = useState<string[]>(recurrence?.weekdays ?? ['MO'])
+  const [weekdays, setWeekdays] = useState<string[]>(
+    recurrence?.weekdays?.length ? recurrence.weekdays : [selectedWeekday]
+  )
   const [monthlyMode, setMonthlyMode] = useState(recurrence?.monthlyMode ?? 'monthday')
   const [monthDay, setMonthDay] = useState(recurrence?.monthDay ?? (Number(date.slice(8, 10)) || 1))
   const [nth, setNth] = useState<1 | 2 | 3 | 4 | -1>(recurrence?.nth ?? 1)
-  const [nthWeekday, setNthWeekday] = useState(recurrence?.nthWeekday ?? 'MO')
+  const [nthWeekday, setNthWeekday] = useState(recurrence?.nthWeekday ?? selectedWeekday)
   const [yearMonth, setYearMonth] = useState(recurrence?.yearMonth ?? (Number(date.slice(5, 7)) || 1))
   const [yearlyMode, setYearlyMode] = useState(recurrence?.yearlyMode ?? 'monthday')
   const [untilDate, setUntilDate] = useState(recurrence?.untilDate ?? '')
@@ -166,7 +169,7 @@ export default function ScheduleEditor({
     <form onSubmit={save} className="space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 id="calendar-dialog-title" tabIndex={-1} className="text-xl font-semibold text-gray-900 outline-none">
             {schedule ? 'Edit schedule' : 'New schedule'}
           </h2>
           <p className="text-sm text-gray-500">

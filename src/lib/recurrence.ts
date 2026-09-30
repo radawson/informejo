@@ -51,6 +51,19 @@ const FREQ_BY_NAME: Record<RecurrenceFreq, Frequency> = {
 const SAME_INSTANT_MS = 1500
 const MAX_OCCURRENCES = 500
 
+export function isCalendarDay(day: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return false
+  const [year, month, date] = day.split('-').map(Number)
+  const dt = DateTime.fromObject({ year, month, day: date }, { zone: 'utc' })
+  return dt.isValid && dt.toFormat('yyyy-MM-dd') === day
+}
+
+export function weekdayTokenForDate(date: string): WeekdayToken {
+  const dt = DateTime.fromISO(date)
+  if (!dt.isValid) return 'MO'
+  return WEEKDAYS[dt.weekday - 1] ?? 'MO'
+}
+
 export function defaultRecurrence(): RecurrenceSpec {
   return {
     repeats: false,

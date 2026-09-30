@@ -4,6 +4,7 @@ import KeycloakProvider from 'next-auth/providers/keycloak'
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
 import { Role } from '@/generated/prisma/client'
+import { isReservedSystemEmail } from './system-user'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -60,7 +61,7 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         })
 
-        if (!user || !user.password || user.isKeycloakUser) {
+        if (!user || !user.password || user.isKeycloakUser || user.isSystem || isReservedSystemEmail(user.email)) {
           throw new Error('Invalid credentials')
         }
 
@@ -85,6 +86,7 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       // Handle Keycloak SSO users
       if (account?.provider === 'keycloak') {
+        if (isReservedSystemEmail(user.email || '')) return false
         // Debug: Check if roles are in the access token instead
         console.log('Keycloak access_token (first 50 chars):', account?.access_token?.substring(0, 50))
         console.log('Account object keys:', Object.keys(account || {}))
@@ -93,6 +95,8 @@ export const authOptions: NextAuthOptions = {
           const existingUser = await prisma.user.findUnique({
             where: { id: user.id! }, // Use Keycloak sub (UUID) as primary key
           })
+
+          if (existingUser?.isSystem) return false
 
           if (!existingUser) {
             // Create new user from Keycloak (role determined by Keycloak roles)

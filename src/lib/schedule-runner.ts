@@ -3,10 +3,9 @@ import { TicketStatus } from '@/generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import { ensureSystemUser, SYSTEM_USER_EMAIL } from '@/lib/system-user'
 import { resolveNextFireAt } from '@/lib/recurrence'
+import { SCHEDULE_RUN_LOCK_KEY } from '@/lib/schedule-lock'
 import { sendNewTicketNotificationToAdmins } from '@/lib/email'
 import { emitToAll, SocketEvents } from '@/lib/socketio-server'
-
-const LOCK_KEY = BigInt(814271901)
 
 export async function runDueSchedules() {
   const systemUser = await ensureSystemUser()
@@ -16,7 +15,7 @@ export async function runDueSchedules() {
 
   const createdTickets = await prisma.$transaction(async (tx) => {
     const lockRows = await tx.$queryRaw<Array<{ locked: boolean }>>`
-      SELECT pg_try_advisory_xact_lock(${LOCK_KEY}) AS locked
+      SELECT pg_try_advisory_xact_lock(${SCHEDULE_RUN_LOCK_KEY}) AS locked
     `
     if (!lockRows[0]?.locked) {
       return []
@@ -61,6 +60,26 @@ export async function runDueSchedules() {
       })
       if (claim.count !== 1) continue
 
+      let assignedToId = schedule.assignedToId
+      if (assignedToId) {
+        const assignee = await tx.user.findFirst({
+          where: {
+            id: assignedToId,
+            role: 'ADMIN',
+            isActive: true,
+            isSystem: false,
+          },
+          select: { id: true },
+        })
+        if (!assignee) {
+          assignedToId = null
+          await tx.schedule.update({
+            where: { id: schedule.id },
+            data: { assignedToId: null },
+          })
+        }
+      }
+
       const ticket = await tx.ticket.create({
         data: {
           title: schedule.title,
@@ -69,7 +88,7 @@ export async function runDueSchedules() {
           priority: schedule.priority,
           status: TicketStatus.OPEN,
           createdById: systemUser.id,
-          assignedToId: schedule.assignedToId,
+          assignedToId,
         },
         include: {
           createdBy: {

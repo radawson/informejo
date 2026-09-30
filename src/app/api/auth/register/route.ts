@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { Role } from '@/generated/prisma/client'
 import { z } from 'zod'
+import { isReservedSystemEmail } from '@/lib/system-user'
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -15,6 +16,13 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { email, password, name, department } = registerSchema.parse(body)
+
+    if (isReservedSystemEmail(email)) {
+      return NextResponse.json(
+        { error: 'This email address cannot be used' },
+        { status: 400 }
+      )
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
