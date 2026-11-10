@@ -58,6 +58,22 @@ This script will:
 
 `informejo` and `informejo-dev` listen on the same port. The production script stops the dev service first.
 
+### Updating production (ticket server)
+
+Deploy only from git — do **not** rsync or paste files into the server checkout.
+
+On the server:
+
+```bash
+cd ~/quicket
+git fetch origin
+git checkout dev
+git pull --ff-only origin dev
+./scripts/deploy.sh   # or manual steps below; requires sudo for systemd restart
+```
+
+Commit and push changes from your workstation first; the server should only **pull** `origin/dev`.
+
 ### Option 2: Manual Deployment
 
 ```bash
