@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuthenticated } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { TicketStatus } from '@/generated/prisma/client'
 
 // GET /api/stats - Get dashboard statistics
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await requireAuthenticated()
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

@@ -5,6 +5,9 @@ import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
 import { Role } from '@/generated/prisma/client'
 import { isReservedSystemEmail } from './system-user'
+import { KeycloakLinkError, linkKeycloakUserToDatabase } from './keycloak-user-link'
+
+const authDebug = process.env.NODE_ENV !== 'production'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -14,27 +17,28 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.KEYCLOAK_SECRET!,
       issuer: process.env.KEYCLOAK_ISSUER!,
       profile(profile) {
-        // Debug: Log the entire profile to see what Keycloak returns
-        console.log('Keycloak profile:', JSON.stringify(profile, null, 2))
-        
-        // Check multiple places where Keycloak might store roles
+        if (authDebug) {
+          console.log('Keycloak profile:', JSON.stringify(profile, null, 2))
+        }
+
         const realmRoles = profile.realm_access?.roles || []
         const clientRoles = profile.resource_access?.[process.env.KEYCLOAK_ID!]?.roles || []
         const directRoles = profile.roles || []
-        
-        // Combine all possible role sources
         const allRoles = [...realmRoles, ...clientRoles, ...directRoles]
-        
-        console.log('All roles found:', allRoles)
-        
-        // Check if user has 'admin' role (case-insensitive)
+
+        if (authDebug) {
+          console.log('All roles found:', allRoles)
+        }
+
         const isAdmin = allRoles.some(role => 
           role.toLowerCase() === 'admin' || 
           role.toLowerCase() === 'it_admin' ||
           role.toLowerCase() === 'administrator'
         )
-        
-        console.log('User is admin:', isAdmin)
+
+        if (authDebug) {
+          console.log('User is admin:', isAdmin)
+        }
         
         return {
           id: profile.sub,
@@ -87,43 +91,24 @@ export const authOptions: NextAuthOptions = {
       // Handle Keycloak SSO users
       if (account?.provider === 'keycloak') {
         if (isReservedSystemEmail(user.email || '')) return false
-        // Debug: Check if roles are in the access token instead
-        console.log('Keycloak access_token (first 50 chars):', account?.access_token?.substring(0, 50))
-        console.log('Account object keys:', Object.keys(account || {}))
-        
+
         try {
-          const existingUser = await prisma.user.findUnique({
-            where: { id: user.id! }, // Use Keycloak sub (UUID) as primary key
+          await linkKeycloakUserToDatabase({
+            id: user.id!,
+            email: user.email!,
+            name: user.name || 'User',
+            role: user.role as Role,
+            activate: true,
           })
-
-          if (existingUser?.isSystem) return false
-
-          if (!existingUser) {
-            // Create new user from Keycloak (role determined by Keycloak roles)
-            console.log('Creating new Keycloak user:', user.email, 'Role:', user.role)
-            await prisma.user.create({
-              data: {
-                id: user.id!, // Use Keycloak's sub as ID
-                email: user.email!,
-                name: user.name || 'User',
-                role: user.role as Role,
-                isKeycloakUser: true,
-              },
-            })
-            console.log('Keycloak user created successfully')
-          } else {
-            // Update existing user's role in case it changed in Keycloak
-            if (existingUser.role !== user.role) {
-              console.log('Updating user role:', existingUser.email, 'from', existingUser.role, 'to', user.role)
-              await prisma.user.update({
-                where: { id: user.id! },
-                data: { role: user.role as Role },
-              })
-            }
-            console.log('Existing Keycloak user logging in:', user.email, 'Role:', user.role)
+          if (authDebug) {
+            console.log('Keycloak user linked:', user.email, 'Role:', user.role)
           }
         } catch (error) {
-          console.error('Error in Keycloak signIn callback:', error)
+          if (error instanceof KeycloakLinkError) {
+            console.error('Keycloak signIn rejected:', error.message)
+          } else {
+            console.error('Error in Keycloak signIn callback:', error)
+          }
           return false
         }
       }

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAdmin } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
+import { deriveAccountMetadata } from '@/lib/keycloak-user-link'
+import { Role, Prisma } from '@/generated/prisma/client'
 
 /**
  * GET /api/admin/users
@@ -9,16 +10,17 @@ import { prisma } from '@/lib/prisma'
  */
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    const session = await requireAdmin()
+    if (!session) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { searchParams } = new URL(req.url)
     const search = searchParams.get('search') || ''
     const role = searchParams.get('role') || ''
+    const ssoLink = searchParams.get('ssoLink') || ''
 
-    const where: any = { isSystem: false }
+    const where: Prisma.UserWhereInput = { isSystem: false }
 
     if (search) {
       where.OR = [
@@ -27,8 +29,8 @@ export async function GET(req: NextRequest) {
       ]
     }
 
-    if (role) {
-      where.role = role
+    if (role && Object.values(Role).includes(role as Role)) {
+      where.role = role as Role
     }
 
     const users = await prisma.user.findMany({
@@ -41,6 +43,7 @@ export async function GET(req: NextRequest) {
         department: true,
         isKeycloakUser: true,
         isActive: true,
+        password: true,
         createdAt: true,
         _count: {
           select: {
@@ -54,7 +57,23 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    return NextResponse.json(users)
+    const enriched = users.map((user) => {
+      const { password: _password, ...rest } = user
+      const meta = deriveAccountMetadata(user)
+      return {
+        ...rest,
+        accountSource: meta.accountSource,
+        ssoLinkStatus: meta.ssoLinkStatus,
+        userIdDisplay: user.id,
+      }
+    })
+
+    const filtered =
+      ssoLink === 'pending'
+        ? enriched.filter((u) => u.ssoLinkStatus === 'pending')
+        : enriched
+
+    return NextResponse.json(filtered)
   } catch (error) {
     console.error('Error fetching users:', error)
     return NextResponse.json(
@@ -63,4 +82,3 @@ export async function GET(req: NextRequest) {
     )
   }
 }
-

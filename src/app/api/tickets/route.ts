@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuthenticated } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { TicketStatus, TicketPriority, TicketCategory } from '@/generated/prisma/client'
@@ -17,7 +16,7 @@ const createTicketSchema = z.object({
 // GET /api/tickets - List tickets (filtered by user role)
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await requireAuthenticated()
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -92,7 +91,7 @@ export async function GET(req: NextRequest) {
 // POST /api/tickets - Create a new ticket
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await requireAuthenticated()
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
