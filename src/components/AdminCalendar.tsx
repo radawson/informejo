@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import FullCalendar from '@fullcalendar/react'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import timeGridPlugin from '@fullcalendar/timegrid'
-import interactionPlugin from '@fullcalendar/interaction'
-import luxonPlugin from '@fullcalendar/luxon3'
-import type { DateClickArg } from '@fullcalendar/interaction'
-import type { DatesSetArg, EventClickArg, EventInput } from '@fullcalendar/core'
+import dayGridPlugin from '@fullcalendar/react/daygrid'
+import timeGridPlugin from '@fullcalendar/react/timegrid'
+import interactionPlugin from '@fullcalendar/react/interaction'
+import themePlugin from '@fullcalendar/react/themes/classic'
+import '@fullcalendar/react/skeleton.css'
+import '@fullcalendar/react/themes/classic/theme.css'
+import '@fullcalendar/react/themes/classic/palette.css'
+import type { DateClickInfo, DatesSetInfo, EventClickInfo, EventInput } from '@fullcalendar/react'
 import toast from 'react-hot-toast'
 import ScheduleEditor, { ScheduleRecord } from '@/components/ScheduleEditor'
 import { ORG_TIME_ZONE } from '@/lib/recurrence'
@@ -88,18 +90,18 @@ export default function AdminCalendar() {
     })
   }, [schedules])
 
-  const onDatesSet = (arg: DatesSetArg) => {
+  const onDatesSet = (arg: DatesSetInfo) => {
     const next = { start: arg.startStr, end: arg.endStr }
     setRange(next)
     loadEvents(next.start, next.end)
   }
 
-  const onDateClick = (arg: DateClickArg) => {
+  const onDateClick = (arg: DateClickInfo) => {
     const parsed = splitDateStr(arg.dateStr, arg.allDay)
     setPanel({ type: 'choose', date: parsed.date, time: parsed.time })
   }
 
-  const onEventClick = async (arg: EventClickArg) => {
+  const onEventClick = async (arg: EventClickInfo) => {
     const props = arg.event.extendedProps as {
       kind?: string
       scheduleId?: string
@@ -194,7 +196,7 @@ export default function AdminCalendar() {
     <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_20rem] gap-6">
       <div className="card overflow-hidden">
         <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, luxonPlugin]}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, themePlugin]}
           initialView="dayGridMonth"
           headerToolbar={{
             left: 'prev,next today',

@@ -43,24 +43,27 @@ A modern, full-featured IT support ticket management system built with Next.js, 
 
 ## Tech Stack
 
-- **Frontend/Backend**: Next.js 16.0.8 (App Router)
-- **Language**: TypeScript 5.x
+- **Frontend/Backend**: Next.js 16.4.6 (App Router), React 19.3
+- **Language**: TypeScript 6.0
 - **Styling**: Tailwind CSS 4.x
 - **Database**: PostgreSQL 14+
 - **ORM**: Prisma ORM 7.x
 - **Authentication**: NextAuth.js 4.x with Keycloak OIDC
 - **Real-time**: Socket.io 4.x
-- **Email**: Nodemailer 7.x
+- **Email**: Nodemailer 10.x
+- **Calendar**: FullCalendar 7.x
 - **Icons**: Lucide React
 - **Notifications**: React Hot Toast
 
 ## Prerequisites
 
-- Node.js 20.19+, 22.12+, or 24+ (required for Prisma 7 and Next.js 16.0.7+)
+- Node.js 22.18+ or 24+ (Node.js 24 recommended; run `nvm use`)
 - npm 10+
 - PostgreSQL 14+
 - Keycloak server (for admin SSO)
 - SMTP server (optional for email notifications)
+
+See [dependency upgrade notes](./documents/DEPENDENCY_UPGRADE.md) for compatibility constraints and validation commands.
 
 ### ✅ Security: CVE-2025-55182 Patched
 
@@ -445,7 +448,7 @@ npx prisma generate
 ## Troubleshooting
 
 ### Node.js Version Issues
-Prisma 7 requires Node.js 20.19+, 22.12+, or 24+. If you see engine errors:
+This project requires Node.js 22.18+ or 24+. If you see engine errors:
 ```bash
 # Check your current Node.js version
 node --version
@@ -455,7 +458,7 @@ nvm install --lts  # Installs latest LTS (currently v24.x)
 nvm use --lts
 
 # Or install a specific version
-nvm install 22.12
+nvm install 22.18
 nvm use 22.12
 ```
 
